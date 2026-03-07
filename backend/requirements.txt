@@ -1,0 +1,22 @@
+fastapi                    # Modern Python web framework for building APIs
+uvicorn[standard]          # ASGI web server to run FastAPI
+
+sqlalchemy                 # SQL toolkit and Object-Relational Mapping (ORM)
+
+python-multipart           # Support for multipart form data in FastAPI
+
+sentence-transformers      # Generate semantic embeddings from text
+faiss-cpu                  # Facebook AI Similarity Search (vector database)
+
+torch                      # PyTorch - deep learning framework
+transformers               # Hugging Face transformers for LLMs and NLP models
+
+pymupdf                    # Extract text and images from PDF files
+
+tqdm                       # Progress bars for loops and file downloads
+python-dotenv              # Load environment variables from .env file
+
+accelerate                   # Optimize training and inference of SLMs across different hardware
+numpy                      # Fundamental package for scientific computing with Python
+scikit-learn  
+python-dotenv              # Load environment variables from .env file

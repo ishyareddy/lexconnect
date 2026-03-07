@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+.venv/
+
+# Database
+*.db
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Model files
+*.gguf
+*.bin
+*.pt
+*.pth
+
+# FAISS indexes
+*.index
+*.faiss
+
+# Environment
+.env
+# AI models
+tinyllama/
+models/
+*.gguf
+*.bin
+*.pt
+*.pth
+
+# Dataset
+data/
+
