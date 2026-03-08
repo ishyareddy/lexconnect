@@ -2,32 +2,52 @@ import { useState, useRef, useEffect } from "react"
 
 function renderMarkdown(text) {
   if (!text) return null
+
   const normalised = text
     .replace(/\r\n/g, "\n")
     .replace(/\n(\d+\.|-|\*)\s/g, "\n\n$1 ")
+
   const blocks = normalised.split(/\n{2,}/).filter(Boolean)
-  return blocks.map((block, bi) => {
-    const trimmed = block.trim()
+
+  // Merge consecutive numbered-list blocks into one <ol> with correct start
+  const merged = []
+  let i = 0
+  while (i < blocks.length) {
+    const trimmed = blocks[i].trim()
     if (/^\d+\.\s/.test(trimmed)) {
-      return (
-        <ol key={bi}>
-          {trimmed.split(/\n/).filter(Boolean).map((item, ii) => (
-            <li key={ii}>{inlineFormat(item.replace(/^\d+\.\s*/, ""))}</li>
+      // Collect all consecutive numbered blocks
+      const items = []
+      while (i < blocks.length && /^\d+\.\s/.test(blocks[i].trim())) {
+        // Each block may itself contain multiple lines that are list items
+        blocks[i].trim().split(/\n/).filter(Boolean).forEach((line) => {
+          const m = line.match(/^(\d+)\.\s*(.*)/)
+          if (m) items.push({ num: parseInt(m[1], 10), text: m[2] })
+        })
+        i++
+      }
+      const startNum = items[0]?.num ?? 1
+      merged.push(
+        <ol key={`ol-${i}`} start={startNum}>
+          {items.map((item, idx) => (
+            <li key={idx} value={item.num}>{inlineFormat(item.text)}</li>
           ))}
         </ol>
       )
-    }
-    if (/^[-*]\s/.test(trimmed)) {
-      return (
-        <ul key={bi}>
+    } else if (/^[-*]\s/.test(trimmed)) {
+      merged.push(
+        <ul key={`ul-${i}`}>
           {trimmed.split(/\n/).filter(Boolean).map((item, ii) => (
             <li key={ii}>{inlineFormat(item.replace(/^[-*]\s*/, ""))}</li>
           ))}
         </ul>
       )
+      i++
+    } else {
+      merged.push(<p key={`p-${i}`}>{inlineFormat(trimmed)}</p>)
+      i++
     }
-    return <p key={bi}>{inlineFormat(trimmed)}</p>
-  })
+  }
+  return merged
 }
 
 function inlineFormat(text) {
@@ -182,12 +202,13 @@ export default function Chatbot({ cases = [] }) {
 
       {/* Quick-select case pills — shown only when no active case */}
       {cases.length > 0 && !activeCase && (
-        <div className="chatbot-case-pills">
-          <span className="pills-label">Ask about a case:</span>
-          {cases.slice(0, 4).map((c) => (
+        <div className="chatbot-case-pills" style={{ overflowX: "auto", flexWrap: "nowrap" }}>
+          <span className="pills-label" style={{ whiteSpace: "nowrap" }}>Ask about a case:</span>
+          {cases.map((c) => (
             <button
               key={c.id}
               className="case-pill"
+              style={{ whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => {
                 setActiveCaseId(c.id)
                 setMessage(`Based on case #${c.id}, `)
