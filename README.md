@@ -24,6 +24,8 @@ qwen2.5-3b-instruct.Q4_K_M.gguf
 Place in:
 models/
 
+Add faiss_civil.index in data/
+
 run:
 setup.bat
 
