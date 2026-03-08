@@ -342,7 +342,7 @@ export default function LawyerDashboard() {
         {view === "assistant" && (
           <div style={s.chatPanel}>
             <div style={s.panelHeader}>
-              <h2 style={s.panelTitle}>⚖️ Legal Assistant</h2>
+              <h2 style={s.panelTitle}>⚖️ AI Legal Assistant</h2>
               <span style={s.assistantNote}>AI-powered · Indian Civil Law</span>
             </div>
 
