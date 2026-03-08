@@ -26,7 +26,7 @@ export default function Home() {
           <div className="feature-pill">⚖️ Case Tracking</div>
           <div className="feature-pill">🤖 AI Legal Assistant</div>
           <div className="feature-pill">👨‍⚖️ Lawyer Matching</div>
-          <div className="feature-pill">📁 Intake Management</div>
+          
         </div>
       </div>
       <div className="home-glow" />

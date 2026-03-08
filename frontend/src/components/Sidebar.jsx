@@ -10,14 +10,17 @@ export default function Sidebar({ role }) {
   }
 
   const clientLinks = [
-    { to: "/client", icon: "📋", label: "My Cases" },
-    { to: "/client/new-case", icon: "➕", label: "New Case" },
+    { to: "/client",         icon: "📋", label: "My Cases" },
+    { to: "/client/new-case",icon: "➕", label: "New Case" },
     { to: "/client/lawyers", icon: "👨‍⚖️", label: "Find Lawyers" },
   ]
 
+  // Lawyer nav is now handled inside LawyerDashboard itself,
+  // but keep this for any routes that still use the shared sidebar
   const lawyerLinks = [
-    { to: "/lawyer", icon: "📨", label: "Case Requests" },
-    { to: "/lawyer/active", icon: "⚡", label: "Active Cases" },
+    { to: "/lawyer",           icon: "📨", label: "Case Requests" },
+    { to: "/lawyer/active",    icon: "⚡", label: "Active Cases" },
+    { to: "/lawyer/assistant", icon: "⚖️", label: "Legal Assistant" },
   ]
 
   const links = role === "client" ? clientLinks : lawyerLinks
