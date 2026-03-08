@@ -19,10 +19,10 @@ git clone https://github.com/YOUR_USERNAME/lexconnect.git
 cd lexconnect
 
 Download:
-tinyllama-1.1b-chat-v1.0.Q2_K.gguf
+qwen2.5-3b-instruct.Q4_K_M.gguf
 
 Place in:
-tinyllama/
+models/
 
 run:
 setup.bat
