@@ -533,4 +533,8 @@ const s = {
   assistantTextarea:       { flex: 1, padding: "10px 14px", background: "#111827", border: "1px solid #1e2d45", borderRadius: 10, color: "#e2e8f0", fontSize: 13, resize: "none", outline: "none", fontFamily: "inherit", lineHeight: 1.5 },
   assistantSendBtn:        { padding: "10px 16px", background: "#1e3a5f", border: "none", borderRadius: 10, color: "#93c5fd", cursor: "pointer", fontWeight: 700, fontSize: 16, flexShrink: 0 },
   assistantSendBtnDisabled:{ opacity: 0.4, cursor: "not-allowed" },
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b8c85d6 (fix: lawyer dashboard)

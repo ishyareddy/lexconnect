@@ -20,7 +20,11 @@ export default function Sidebar({ role }) {
   const lawyerLinks = [
     { to: "/lawyer",           icon: "📨", label: "Case Requests" },
     { to: "/lawyer/active",    icon: "⚡", label: "Active Cases" },
+<<<<<<< HEAD
     { to: "/lawyer/assistant", icon: "⚖️", label: "AI Legal Assistant" },
+=======
+    { to: "/lawyer/assistant", icon: "⚖️", label: "AILegal Assistant" },
+>>>>>>> b8c85d6 (fix: lawyer dashboard)
   ]
 
   const links = role === "client" ? clientLinks : lawyerLinks
