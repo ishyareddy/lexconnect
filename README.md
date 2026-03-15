@@ -32,6 +32,6 @@ setup.bat
 Run backend
 uvicorn backend.app:app --reload
 
-Run backend
-uvicorn backend.app:app --reload
+Run frontend
+npm run dev
 
