@@ -125,7 +125,7 @@ export default function LawyerCaseRequests() {
                       <button
                         className="btn-accept"
                         disabled={!!actionLoading[r.id]}
-                        onClick={() => updateStatus(r.id, r.case_id || r.id, "In Progress")}
+                        onClick={() => handleAction(r.id, r.case_id || r.id, "In Progress")}
                       >
                         {actionLoading[r.id] === "In Progress" ? "..." : "✓ Accept"}
                       </button>

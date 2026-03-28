@@ -25,10 +25,10 @@ from .lawyer_agent import LawyerAgent
 # The only civil case types this platform handles
 # ---------------------------------------------------------------------------
 CIVIL_CASE_TYPES = {
-    "property":    "Property Disputes & Rent",
-    "family":      "Marriage, Divorce & Maintenance",
-    "custody":     "Child Custody & Adoption",
-    "consumer":    "Consumer Rights & Contracts",
+    "property": "Property Disputes & Rent",
+    "family": "Marriage, Divorce & Maintenance",
+    "custody": "Child Custody & Adoption",
+    "consumer": "Consumer Rights & Contracts",
     "inheritance": "Inheritance & Wills",
 }
 
@@ -41,6 +41,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # -----------------------------
 # SYSTEM INIT
@@ -66,13 +67,13 @@ class CaseInput(BaseModel):
 class NewCaseInput(BaseModel):
     title: str
     description: str = ""
-    case_type: str = "property"  # must be a key in CIVIL_CASE_TYPES
+    case_type: str = "property"
 
 
 class ChatInput(BaseModel):
     message: str
     use_case_context: bool = False
-    case_id: Optional[int] = None  # if set, loads this case from DB as context
+    case_id: Optional[int] = None
 
 
 class RegisterInput(BaseModel):
@@ -97,6 +98,7 @@ def get_user_from_header(authorization: Optional[str], db: Session) -> Optional[
     """
     if not authorization or not authorization.startswith("Bearer "):
         return None
+
     token = authorization.removeprefix("Bearer ").strip()
     try:
         user_id = int(token)
@@ -120,7 +122,6 @@ def root():
 
 @app.post("/register")
 def register(payload: RegisterInput, db: Session = Depends(get_db)):
-
     existing = db.query(User).filter(User.email == payload.email).first()
     if existing:
         raise HTTPException(400, "Email already exists")
@@ -169,7 +170,6 @@ def login(
     if user.password_hash != hashed:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # We use user_id as the bearer token (simple, no JWT dependency needed)
     return {
         "access_token": str(user.id),
         "token_type": "bearer",
@@ -180,7 +180,7 @@ def login(
 
 
 # -----------------------------
-# CHATBOT  ← THIS IS WHAT THE FRONTEND CALLS
+# CHATBOT
 # -----------------------------
 
 @app.post("/chat")
@@ -191,11 +191,10 @@ def chat(
 ) -> Dict:
     """
     Frontend sends: { "message": "...", "use_case_context": false, "case_id": 4 }
-    Returns:        { "answer": "...", "retrieved_count": 0 }
+    Returns: { "answer": "...", "retrieved_count": 0 }
     """
     ctx = None
 
-    # 1. If a specific case_id is provided, load it from the DB
     if payload.case_id is not None:
         case = db.query(Case).filter(Case.id == payload.case_id).first()
         if case:
@@ -204,9 +203,6 @@ def chat(
                 f"Issue Type: {case.issue_type}\n"
                 f"Description: {case.description}\n"
             )
-        # If case not found, fall through gracefully
-
-    # 2. Fallback: use in-memory intake context if flag is set
     elif payload.use_case_context:
         ctx = intake.get_case_context()
 
@@ -240,7 +236,6 @@ def intake_case(payload: CaseInput, db: Session = Depends(get_db)):
 
 @app.get("/cases/types")
 def get_case_types():
-    """Frontend fetches this to populate the case type dropdown."""
     return [{"value": k, "label": v} for k, v in CIVIL_CASE_TYPES.items()]
 
 
@@ -250,23 +245,18 @@ def create_case(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
-    """
-    Frontend new-case form calls this.
-    Requires Authorization: Bearer {user_id} header.
-    """
     user = get_user_from_header(authorization, db)
     if not user:
         raise HTTPException(
             status_code=401,
             detail="Not authenticated — make sure the Bearer token is being sent in the Authorization header."
         )
+
     if user.role != UserRole.client:
         raise HTTPException(403, "Only clients can file cases")
 
-    # Normalise and validate case type
     case_type_key = payload.case_type.lower().strip()
     if case_type_key not in CIVIL_CASE_TYPES:
-        # Fuzzy match e.g. "Property" -> "property", "Marriage" -> "family"
         mapping = {
             "property": "property", "rent": "property", "real estate": "property",
             "marriage": "family", "divorce": "family", "maintenance": "family",
@@ -279,7 +269,7 @@ def create_case(
                 case_type_key = key
                 break
         else:
-            case_type_key = "property"  # safe default
+            case_type_key = "property"
 
     description_full = f"{payload.title}\n\n{payload.description}".strip()
 
@@ -293,13 +283,12 @@ def create_case(
     db.commit()
     db.refresh(case)
 
-    # Auto-generate lawyer recommendations
     try:
         lawyers = router.get_top_lawyers(db, case.issue_type)
         if lawyers:
             router.create_recommendations(db, case.id, lawyers)
     except Exception:
-        pass  # Non-fatal
+        pass
 
     return {
         "status": "case_saved",
@@ -314,7 +303,6 @@ def get_cases(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
-    """Returns all cases for the logged-in client."""
     user = get_user_from_header(authorization, db)
     if not user:
         raise HTTPException(401, "Not authenticated")
@@ -323,11 +311,11 @@ def get_cases(
 
     result = []
     for c in cases:
-        # Find assigned lawyer name if any active case record exists
         active = db.query(ActiveCase).filter(
             ActiveCase.case_id == c.id,
             ActiveCase.status == "active"
         ).first()
+
         lawyer_name = None
         if active and active.lawyer and active.lawyer.user:
             lawyer_name = active.lawyer.user.name
@@ -337,13 +325,45 @@ def get_cases(
             "title": c.description.split("\n")[0] if "\n" in c.description else c.description[:60],
             "description": c.description,
             "case_type": c.issue_type,
-            "status": c.status.value.capitalize() if hasattr(c.status, 'value') else str(c.status),
+            "status": c.status.value.capitalize() if hasattr(c.status, "value") else str(c.status),
             "assigned_lawyer": lawyer_name,
             "created_at": c.created_at.isoformat() if c.created_at else None
         })
 
     return result
 
+@app.delete("/cases/{case_id}")
+def delete_case(
+    case_id: int,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    user = get_user_from_header(authorization, db)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+    if user.role != UserRole.client:
+        raise HTTPException(403, "Only clients can delete cases")
+
+    case = db.query(Case).filter(
+        Case.id == case_id,
+        Case.client_id == user.id
+    ).first()
+
+    if not case:
+        raise HTTPException(404, "Case not found")
+
+    db.query(LawyerRecommendation).filter(
+        LawyerRecommendation.case_id == case.id
+    ).delete()
+
+    db.query(ActiveCase).filter(
+        ActiveCase.case_id == case.id
+    ).delete()
+
+    db.delete(case)
+    db.commit()
+
+    return {"status": "deleted", "case_id": case_id}
 
 @app.patch("/cases/{case_id}/status")
 def update_case_status(
@@ -352,27 +372,18 @@ def update_case_status(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
-    """Lawyer accepts/declines/resolves a case."""
     user = get_user_from_header(authorization, db)
     if not user:
         raise HTTPException(401, "Not authenticated")
 
-    case = db.query(Case).filter(Case.id == case_id).first()
-    if not case:
-        raise HTTPException(404, "Case not found")
+    if user.role != UserRole.lawyer:
+        raise HTTPException(403, "Lawyers only")
 
-    status_map = {
-        "In Progress": CaseStatus.matched,
-        "Resolved": CaseStatus.closed,
-        "Rejected": CaseStatus.open,   # re-open so client can find another lawyer
-        "Pending": CaseStatus.open,
-    }
-    new_status = status_map.get(payload.status)
-    if new_status:
-        case.status = new_status
-        db.commit()
+    result = lawyer_agent.update_case_status(db, case_id, user.id, payload.status)
+    if not result:
+        raise HTTPException(404, "Case or lawyer assignment not found")
 
-    return {"status": "updated", "case_id": case_id}
+    return {"status": "updated", "case_id": case_id, "action": payload.status}
 
 
 # -----------------------------
@@ -397,7 +408,6 @@ def get_recommendations(case_id: int, db: Session = Depends(get_db)):
 
 @app.get("/lawyers")
 def list_lawyers(db: Session = Depends(get_db)):
-    """Frontend LawyerRecommendations component calls this."""
     profiles = db.query(LawyerProfile).filter(LawyerProfile.is_available == 1).all()
     return [
         {
@@ -427,7 +437,6 @@ def request_lawyer(
     if not lawyer_id:
         raise HTTPException(400, "lawyer_id required")
 
-    # Use case_id from payload if provided, otherwise fall back to most recent open case
     case_id = payload.get("case_id")
     if case_id:
         case = db.query(Case).filter(
@@ -444,20 +453,14 @@ def request_lawyer(
         if not case:
             raise HTTPException(404, "No open case found. File a case first.")
 
-    # Block duplicate: check if this client already requested this lawyer across ANY case
-    already = (
-        db.query(LawyerRecommendation)
-        .join(Case, LawyerRecommendation.case_id == Case.id)
-        .filter(
-            Case.client_id == user.id,
-            LawyerRecommendation.lawyer_id == lawyer_id,
-            LawyerRecommendation.status == RecommendationStatus.client_accepted,
-        )
-        .first()
-    )
+    # Block duplicate only for the same case
+    already = db.query(LawyerRecommendation).filter(
+        LawyerRecommendation.case_id == case.id,
+        LawyerRecommendation.lawyer_id == lawyer_id,
+        LawyerRecommendation.status == RecommendationStatus.client_accepted
+    ).first()
     if already:
-        raise HTTPException(409, "You have already sent a request to this lawyer.")
-
+        raise HTTPException(409, "You have already sent a request to this lawyer for this case.")
     existing = db.query(LawyerRecommendation).filter(
         LawyerRecommendation.case_id == case.id,
         LawyerRecommendation.lawyer_id == lawyer_id
@@ -466,7 +469,12 @@ def request_lawyer(
     if existing:
         existing.status = RecommendationStatus.client_accepted
         db.commit()
-        return {"status": "requested", "rec_id": existing.id}
+        return {
+            "status": "requested",
+            "rec_id": existing.id,
+            "case_id": case.id,
+            "lawyer_id": lawyer_id
+        }
 
     rec = LawyerRecommendation(
         case_id=case.id,
@@ -478,7 +486,12 @@ def request_lawyer(
     db.commit()
     db.refresh(rec)
 
-    return {"status": "requested", "rec_id": rec.id}
+    return {
+        "status": "requested",
+        "rec_id": rec.id,
+        "case_id": case.id,
+        "lawyer_id": lawyer_id
+    }
 
 
 @app.get("/my-requests")
@@ -486,13 +499,15 @@ def my_requests(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
-    """Returns list of lawyer_ids this client has already requested — used by frontend to persist button state."""
+    """
+    Returns case-specific lawyer requests for the logged-in client.
+    """
     user = get_user_from_header(authorization, db)
     if not user:
         raise HTTPException(401, "Not authenticated")
 
     rows = (
-        db.query(LawyerRecommendation.lawyer_id)
+        db.query(LawyerRecommendation.case_id, LawyerRecommendation.lawyer_id)
         .join(Case, LawyerRecommendation.case_id == Case.id)
         .filter(
             Case.client_id == user.id,
@@ -500,7 +515,13 @@ def my_requests(
         )
         .all()
     )
-    return {"requested_lawyer_ids": [r.lawyer_id for r in rows]}
+
+    return {
+        "requested_pairs": [
+            {"case_id": row.case_id, "lawyer_id": row.lawyer_id}
+            for row in rows
+        ]
+    }
 
 
 @app.post("/recommendations/{rec_id}/client-accept")
@@ -508,16 +529,29 @@ def client_accept(rec_id: int, db: Session = Depends(get_db)):
     rec = db.query(LawyerRecommendation).filter(LawyerRecommendation.id == rec_id).first()
     if not rec:
         raise HTTPException(404)
+
     rec.status = RecommendationStatus.client_accepted
     db.commit()
     return {"status": "client_accepted"}
 
 
 @app.post("/recommendations/{rec_id}/lawyer-accept")
-def lawyer_accept(rec_id: int, db: Session = Depends(get_db)):
+def lawyer_accept(
+    rec_id: int,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    user = get_user_from_header(authorization, db)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    if user.role != UserRole.lawyer:
+        raise HTTPException(403, "Lawyers only")
+
     active = lawyer_agent.accept_case(db, rec_id)
     if not active:
-        raise HTTPException(404)
+        raise HTTPException(404, "Recommendation not found")
+
     return {"status": "case_activated"}
 
 
@@ -530,55 +564,14 @@ def lawyer_cases(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
-    """
-    Returns all cases assigned/requested to this lawyer.
-    Used by LawyerCaseRequests component.
-    """
     user = get_user_from_header(authorization, db)
     if not user:
         raise HTTPException(401, "Not authenticated")
+
     if user.role != UserRole.lawyer:
         raise HTTPException(403, "Lawyers only")
 
-    profile = db.query(LawyerProfile).filter(LawyerProfile.user_id == user.id).first()
-    if not profile:
-        raise HTTPException(404, "Lawyer profile not found")
-
-    recs = db.query(LawyerRecommendation).filter(
-        LawyerRecommendation.lawyer_id == profile.id
-    ).all()
-
-    result = []
-    for r in recs:
-        c = r.case
-        if not c:
-            continue
-
-        # Map internal status → frontend display status
-        if r.status == RecommendationStatus.client_accepted:
-            display_status = "Pending"
-        elif r.status == RecommendationStatus.lawyer_accepted:
-            display_status = "In Progress"
-        elif r.status == RecommendationStatus.declined:
-            display_status = "Rejected"
-        elif c.status == CaseStatus.closed:
-            display_status = "Resolved"
-        else:
-            display_status = "Pending"
-
-        client = db.query(User).filter(User.id == c.client_id).first()
-
-        result.append({
-            "id": r.id,
-            "case_id": c.id,
-            "title": c.description.split("\n")[0] if "\n" in c.description else c.description[:60],
-            "description": c.description,
-            "case_type": c.issue_type,
-            "status": display_status,
-            "client_name": client.name if client else "Unknown Client",
-        })
-
-    return result
+    return lawyer_agent.get_lawyer_cases(db, user.id)
 
 
 @app.get("/lawyer/active-cases")
@@ -606,6 +599,21 @@ def lawyer_requests(lawyer_id: int, db: Session = Depends(get_db)):
         }
         for r in reqs
     ]
+
+
+@app.get("/lawyer/audit-log")
+def lawyer_audit_log(
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    user = get_user_from_header(authorization, db)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    if user.role != UserRole.lawyer:
+        raise HTTPException(403, "Lawyers only")
+
+    return lawyer_agent.get_audit_log()
 
 
 # -----------------------------
