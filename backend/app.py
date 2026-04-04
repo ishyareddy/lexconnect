@@ -3,6 +3,7 @@ import suppress_warnings
 from fastapi import FastAPI, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
+from datetime import datetime
 
 from pydantic import BaseModel
 from typing import Dict, Optional
@@ -12,7 +13,8 @@ from hashlib import sha256
 
 from .database import (
     init_db, get_db, Case, CaseStatus, LawyerRecommendation,
-    RecommendationStatus, User, UserRole, LawyerProfile, ActiveCase
+    RecommendationStatus, User, UserRole, LawyerProfile, ActiveCase,
+    Message, VideoCall, CallSession
 )
 
 from .intake_agent import IntakeAgent
@@ -84,6 +86,21 @@ class RegisterInput(BaseModel):
 
 
 class StatusUpdate(BaseModel):
+    status: str
+
+
+class MessageInput(BaseModel):
+    recipient_id: int
+    content: str
+    case_id: Optional[int] = None
+
+
+class InitiateCallInput(BaseModel):
+    recipient_id: int
+    case_id: int
+
+
+class UpdateCallStatusInput(BaseModel):
     status: str
 
 
@@ -317,8 +334,10 @@ def get_cases(
         ).first()
 
         lawyer_name = None
+        lawyer_id = None
         if active and active.lawyer and active.lawyer.user:
             lawyer_name = active.lawyer.user.name
+            lawyer_id = active.lawyer.user.id
 
         result.append({
             "id": c.id,
@@ -327,6 +346,7 @@ def get_cases(
             "case_type": c.issue_type,
             "status": c.status.value.capitalize() if hasattr(c.status, "value") else str(c.status),
             "assigned_lawyer": lawyer_name,
+            "assigned_lawyer_id": lawyer_id,
             "created_at": c.created_at.isoformat() if c.created_at else None
         })
 
@@ -614,6 +634,308 @@ def lawyer_audit_log(
         raise HTTPException(403, "Lawyers only")
 
     return lawyer_agent.get_audit_log()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MESSAGING
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/messages/send")
+def send_message(
+    payload: MessageInput,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """Send a message between lawyer and client"""
+    user = get_user_from_header(authorization, db)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    recipient = db.query(User).filter(User.id == payload.recipient_id).first()
+    if not recipient:
+        raise HTTPException(404, "Recipient not found")
+
+    message = Message(
+        sender_id=user.id,
+        recipient_id=payload.recipient_id,
+        content=payload.content,
+        case_id=payload.case_id
+    )
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+
+    return {
+        "id": message.id,
+        "sender_id": message.sender_id,
+        "sender_name": user.name,
+        "recipient_id": message.recipient_id,
+        "content": message.content,
+        "case_id": message.case_id,
+        "is_read": message.is_read,
+        "created_at": message.created_at.isoformat()
+    }
+
+
+@app.get("/messages/conversation/{other_user_id}")
+def get_conversation(
+    other_user_id: int,
+    case_id: Optional[int] = None,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """Get message history between current user and another user"""
+    user = get_user_from_header(authorization, db)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    query = db.query(Message).filter(
+        ((Message.sender_id == user.id) & (Message.recipient_id == other_user_id)) |
+        ((Message.sender_id == other_user_id) & (Message.recipient_id == user.id))
+    )
+
+    if case_id:
+        query = query.filter(Message.case_id == case_id)
+
+    messages = query.order_by(Message.created_at.asc()).all()
+
+    return [
+        {
+            "id": m.id,
+            "sender_id": m.sender_id,
+            "sender_name": m.sender.name,
+            "recipient_id": m.recipient_id,
+            "content": m.content,
+            "case_id": m.case_id,
+            "is_read": m.is_read,
+            "created_at": m.created_at.isoformat()
+        }
+        for m in messages
+    ]
+
+
+@app.get("/messages/unread")
+def get_unread_messages(
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """Get count of unread messages for current user"""
+    user = get_user_from_header(authorization, db)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    unread = db.query(Message).filter(
+        Message.recipient_id == user.id,
+        Message.is_read == 0
+    ).all()
+
+    # Mark as read
+    for msg in unread:
+        msg.is_read = 1
+    db.commit()
+
+    return {
+        "unread_count": len(unread),
+        "messages": [
+            {
+                "id": m.id,
+                "sender_id": m.sender_id,
+                "sender_name": m.sender.name,
+                "content": m.content,
+                "case_id": m.case_id,
+                "created_at": m.created_at.isoformat()
+            }
+            for m in unread
+        ]
+    }
+
+
+@app.get("/messages/recent-conversations")
+def get_recent_conversations(
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """Get list of recent conversations for the current user"""
+    user = get_user_from_header(authorization, db)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    from sqlalchemy import func, or_
+
+    # Get distinct other users in conversations
+    recent = db.query(
+        func.max(Message.id).label("latest_id")
+    ).filter(
+        or_(
+            Message.sender_id == user.id,
+            Message.recipient_id == user.id
+        )
+    ).group_by(
+        func.case(
+            (Message.sender_id == user.id, Message.recipient_id),
+            else_=Message.sender_id
+        )
+    ).order_by(func.max(Message.created_at).desc()).all()
+
+    conversations = []
+    for row in recent:
+        msg = db.query(Message).filter(Message.id == row.latest_id).first()
+        if msg:
+            other_user = msg.sender if msg.sender_id != user.id else msg.recipient
+            conversations.append({
+                "user_id": other_user.id,
+                "user_name": other_user.name,
+                "last_message": msg.content[:100],
+                "last_message_at": msg.created_at.isoformat()
+            })
+
+    return conversations
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# VIDEO CALLS (Jitsi Integration)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/calls/initiate")
+def initiate_video_call(
+    payload: InitiateCallInput,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """Initiate a video call between lawyer and client"""
+    user = get_user_from_header(authorization, db)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    recipient = db.query(User).filter(User.id == payload.recipient_id).first()
+    if not recipient:
+        raise HTTPException(404, "Recipient not found")
+
+    case = db.query(Case).filter(Case.id == payload.case_id).first()
+    if not case:
+        raise HTTPException(404, "Case not found")
+
+    # Create unique room name for Jitsi
+    room_name = f"lexconnect-case{payload.case_id}-{user.id}-{payload.recipient_id}"
+
+    # Check if there's already an active call
+    existing = db.query(VideoCall).filter(
+        VideoCall.case_id == payload.case_id,
+        VideoCall.status == CallSession.active
+    ).first()
+
+    if existing:
+        return {
+            "call_id": existing.id,
+            "room_name": existing.room_name,
+            "status": existing.status.value
+        }
+
+    call = VideoCall(
+        case_id=payload.case_id,
+        initiator_id=user.id,
+        recipient_id=payload.recipient_id,
+        room_name=room_name,
+        status=CallSession.initiating
+    )
+    db.add(call)
+    db.commit()
+    db.refresh(call)
+
+    return {
+        "call_id": call.id,
+        "room_name": call.room_name,
+        "status": call.status.value,
+        "jitsi_server": "https://meet.jit.si"
+    }
+
+
+@app.patch("/calls/{call_id}/status")
+def update_call_status(
+    call_id: int,
+    payload: UpdateCallStatusInput,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """Update video call status (active, completed, declined)"""
+    user = get_user_from_header(authorization, db)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    call = db.query(VideoCall).filter(VideoCall.id == call_id).first()
+    if not call:
+        raise HTTPException(404, "Call not found")
+
+    if payload.status == "active":
+        call.status = CallSession.active
+        call.started_at = datetime.utcnow()
+    elif payload.status == "completed":
+        call.status = CallSession.completed
+        call.ended_at = datetime.utcnow()
+    elif payload.status == "declined":
+        call.status = CallSession.declined
+        call.ended_at = datetime.utcnow()
+
+    db.commit()
+    return {"status": call.status.value}
+
+
+@app.get("/calls/active/{case_id}")
+def get_active_call(
+    case_id: int,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """Get active call for a case"""
+    user = get_user_from_header(authorization, db)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    call = db.query(VideoCall).filter(
+        VideoCall.case_id == case_id,
+        VideoCall.status == CallSession.active
+    ).first()
+
+    if not call:
+        return {"call": None}
+
+    return {
+        "call": {
+            "id": call.id,
+            "room_name": call.room_name,
+            "status": call.status.value,
+            "initiator_id": call.initiator_id,
+            "recipient_id": call.recipient_id
+        }
+    }
+
+
+@app.get("/calls/pending")
+def get_pending_calls(
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """Get pending incoming calls for current user"""
+    user = get_user_from_header(authorization, db)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    calls = db.query(VideoCall).filter(
+        VideoCall.recipient_id == user.id,
+        VideoCall.status == CallSession.initiating
+    ).all()
+
+    return [
+        {
+            "call_id": c.id,
+            "room_name": c.room_name,
+            "initiator_id": c.initiator_id,
+            "initiator_name": c.initiator.name,
+            "case_id": c.case_id,
+            "created_at": c.created_at.isoformat()
+        }
+        for c in calls
+    ]
 
 
 # -----------------------------

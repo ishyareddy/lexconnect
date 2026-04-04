@@ -1,7 +1,7 @@
 from pathlib import Path
 
-# Root project dir = this repo
-ROOT_DIR = Path(r"C:\Users\sahit\Downloads\lexconnect")
+# Root project dir = get parent of this repo (config_paths.py is in root)
+ROOT_DIR = Path(__file__).parent.absolute()
 
 DATA_DIR = ROOT_DIR / "data"
 PDF_DIR = DATA_DIR / "pdfs"

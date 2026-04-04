@@ -1,6 +1,5 @@
 import json
 import re
-from difflib import get_close_matches
 from typing import List, Dict, Optional
 
 import faiss

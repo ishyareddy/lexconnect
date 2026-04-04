@@ -1,7 +1,14 @@
 from llama_cpp import Llama
 import re
+from config_paths import ROOT_DIR
 
+<<<<<<< HEAD
 MODEL_PATH = r"C:\Users\sahit\Downloads\lexconnect\models\qwen2.5-3b-instruct-q4_k_m.gguf"
+=======
+# Model path configured in config_paths.py for portability
+MODEL_PATH = ROOT_DIR / "models" / "qwen2.5-3b-instruct.Q4_K_M.gguf"
+
+>>>>>>> 99dc52a6b7c2d8109489cfe8dba99123758b3ce1
 # ── Speed optimisations ──────────────────────────────────────────────────────
 #  n_ctx   : 2048 instead of 4096  → halves KV-cache memory, faster prefill
 #  n_batch : 256 instead of 512    → reduces per-batch memory pressure on CPU
@@ -10,7 +17,7 @@ MODEL_PATH = r"C:\Users\sahit\Downloads\lexconnect\models\qwen2.5-3b-instruct-q4
 #  f16_kv  : True                  → half-precision KV cache, 2× faster on CPU
 # ─────────────────────────────────────────────────────────────────────────────
 llm = Llama(
-    model_path=MODEL_PATH,
+    model_path=str(MODEL_PATH),
     n_ctx=2048,
     n_threads=12,
     n_batch=256,

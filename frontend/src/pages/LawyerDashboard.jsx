@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import CommunicationPanel from "../components/CommunicationPanel"
 
 function inlineFormat(text) {
   const parts = text.split(/(\*\*[^*]+\*\*)/)
@@ -458,7 +459,7 @@ export default function LawyerDashboard() {
                           setSelectedCase(r)
                         }}
                       >
-                        💬 Chat
+                        💬 Chat & Video
                       </button>
 
                       <button
@@ -549,121 +550,25 @@ export default function LawyerDashboard() {
 
       {selectedCase && (
         <div style={s.modalOverlay} onClick={() => setSelectedCase(null)}>
-          <div style={s.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div style={s.modalHeader}>
-              <div>
-                <h2 style={s.modalTitle}>
-                  {selectedCase.title || `Case #${selectedCase.case_id || selectedCase.id}`}
-                </h2>
-                {selectedCase.client_name && <div style={s.clientName}>👤 {selectedCase.client_name}</div>}
-              </div>
-              <button style={s.modalCloseBtn} onClick={() => setSelectedCase(null)}>
-                ✕
-              </button>
-            </div>
-
-            <div style={s.caseInfoBar}>
-              <span style={s.caseTypeTag}>{selectedCase.case_type || "General"}</span>
-              <span
-                style={{
-                  ...s.statusDot,
-                  background: STATUS_COLORS[selectedCase.status] || "#6b7280",
-                }}
-              >
-                {selectedCase.status}
-              </span>
-            </div>
-
-            <div style={s.modalBody}>
-              <div style={s.modalSectionTitle}>Case Description</div>
-              <div style={s.modalText}>
-                {selectedCase.description || "No description provided."}
-              </div>
-            </div>
-
-            {selectedCase.status === "In Progress" && (
-              <>
-                <div style={s.modalSectionTitle}>Client Chat</div>
-                <div style={s.modalChatBox}>
-                  {(messages[selectedCase.id] || []).length === 0 ? (
-                    <div style={s.chatEmpty}>
-                      💬 No messages yet. Start the conversation with your client.
-                    </div>
-                  ) : (
-                    (messages[selectedCase.id] || []).map((m, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          ...s.bubble,
-                          ...(m.role === "lawyer" ? s.bubbleLawyer : s.bubbleClient),
-                        }}
-                      >
-                        <div style={s.bubbleLabel}>
-                          {m.role === "lawyer" ? "You" : "Client"}
-                        </div>
-                        {m.text}
-                      </div>
-                    ))
-                  )}
-                  <div ref={bottomRef} />
-                </div>
-
-                <div style={s.chatInputRow}>
-                  <input
-                    style={s.chatInput}
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" &&
-                      !e.shiftKey &&
-                      sendClientMessage(selectedCase.id)
-                    }
-                    placeholder="Message your client..."
-                  />
-                  <button
-                    style={s.sendBtn}
-                    onClick={() => sendClientMessage(selectedCase.id)}
-                    disabled={chatSending || !chatInput.trim()}
-                  >
-                    {chatSending ? "..." : "Send"}
-                  </button>
-                </div>
-              </>
-            )}
-
-            <div style={s.modalActions}>
-              {selectedCase.status === "Pending" && (
-                <>
-                  <button
-                    style={s.acceptBtn}
-                    disabled={!!actionLoading[selectedCase.id] || submitting}
-                    onClick={() => updateStatus(selectedCase, "In Progress")}
-                  >
-                    {actionLoading[selectedCase.id] === "In Progress" ? "..." : "✓ Accept"}
-                  </button>
-                  <button
-                    style={s.rejectBtn}
-                    disabled={!!actionLoading[selectedCase.id] || submitting}
-                    onClick={() => updateStatus(selectedCase, "Rejected")}
-                  >
-                    {actionLoading[selectedCase.id] === "Rejected" ? "..." : "✕ Decline"}
-                  </button>
-                </>
-              )}
-
-              {selectedCase.status === "In Progress" && (
-                <button
-                  style={s.resolveBtn}
-                  disabled={!!actionLoading[selectedCase.id] || submitting}
-                  onClick={() => updateStatus(selectedCase, "Resolved")}
-                >
-                  {actionLoading[selectedCase.id] === "Resolved" ? "..." : "✓ Resolve"}
-                </button>
-              )}
-            </div>
+          <div style={{
+            width: "100%",
+            maxWidth: "900px",
+            height: "80vh",
+            borderRadius: "12px",
+            background: "white",
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)"
+          }} onClick={(e) => e.stopPropagation()}>
+            <CommunicationPanel
+              caseId={selectedCase.case_id || selectedCase.id}
+              otherUserId={selectedCase.client_id}
+              otherUserName={selectedCase.client_name}
+              onClose={() => setSelectedCase(null)}
+            />
           </div>
         </div>
       )}
+
+      {/* Video call modal removed - now integrated into case detail modal */}
     </div>
   )
 }

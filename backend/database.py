@@ -88,6 +88,40 @@ class ActiveCase(Base):
     case = relationship("Case")
     lawyer = relationship("LawyerProfile")
 
+class Message(Base):
+    __tablename__ = "messages"
+    id = Column(Integer, primary_key=True, index=True)
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    recipient_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    case_id = Column(Integer, ForeignKey("cases.id"), nullable=True)
+    content = Column(Text, nullable=False)
+    is_read = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    sender = relationship("User", foreign_keys=[sender_id])
+    recipient = relationship("User", foreign_keys=[recipient_id])
+    case = relationship("Case")
+
+class CallSession(str, enum.Enum):
+    initiating = "initiating"
+    active = "active"
+    completed = "completed"
+    declined = "declined"
+
+class VideoCall(Base):
+    __tablename__ = "video_calls"
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey("cases.id"), nullable=False)
+    initiator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    recipient_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    room_name = Column(String(255), nullable=False, unique=True)
+    status = Column(Enum(CallSession), nullable=False, default=CallSession.initiating)
+    started_at = Column(DateTime, nullable=True)
+    ended_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    case = relationship("Case")
+    initiator = relationship("User", foreign_keys=[initiator_id])
+    recipient = relationship("User", foreign_keys=[recipient_id])
+
 # 🔥 SEED DEMO DATA
 def init_db() -> None:
     """Create tables + seed demo data"""
@@ -153,5 +187,6 @@ __all__ = [
     'Case', 'CaseStatus',
     'LawyerProfile', 
     'LawyerRecommendation', 'RecommendationStatus',
-    'ActiveCase'
+    'ActiveCase',
+    'Message', 'VideoCall', 'CallSession'
 ]

@@ -36,7 +36,7 @@ const formatDate = (iso) => {
   })
 }
 
-export default function CaseList({ autoOpenModal = false, onFindLawyer, onCasesLoaded }) {
+export default function CaseList({ autoOpenModal = false, onFindLawyer, onCasesLoaded, onChatWithLawyer }) {
   const [cases, setCases] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -175,6 +175,26 @@ export default function CaseList({ autoOpenModal = false, onFindLawyer, onCasesL
                    </button>
                   )}
                   
+                  {c.assigned_lawyer && c.assigned_lawyer_id && (
+                    <button
+                      className="btn-chat-lawyer"
+                      onClick={() => onChatWithLawyer && onChatWithLawyer(c.assigned_lawyer_id, c.assigned_lawyer, c.id)}
+                      style={{
+                        marginTop: "8px",
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        border: "none",
+                        color: "white",
+                        borderRadius: "6px",
+                        padding: "8px 12px",
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        width: "100%",
+                      }}
+                    >
+                      💬 Chat with {c.assigned_lawyer}
+                    </button>
+                  )}
 
                   <button
                     className="btn-delete-case"
