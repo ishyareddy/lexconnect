@@ -28,14 +28,24 @@ export default function LawyerRecommendations({ filterType = "all", onFilterChan
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   }
 
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/lawyers", { headers })
-      .then((r) => r.json())
-      .then((d) => setLawyers(Array.isArray(d) ? d : []))
-      .catch(() => setLawyers([]))
-      .finally(() => setLoading(false))
-  }, [])
+useEffect(() => {
+  if (!caseId) {
+    setLawyers([])
+    setLoading(false)
+    return
+  }
 
+  setLoading(true)
+
+  fetch(`http://127.0.0.1:8000/cases/${caseId}/recommendations`, {
+    method: "POST",
+    headers,
+  })
+    .then((r) => r.json())
+    .then((d) => setLawyers(Array.isArray(d.recommendations) ? d.recommendations : []))
+    .catch(() => setLawyers([]))
+    .finally(() => setLoading(false))
+}, [caseId])
   async function requestLawyer(lawyerId) {
      if (!caseId) {
       alert("Please select a case first.")

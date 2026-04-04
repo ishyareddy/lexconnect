@@ -6,11 +6,12 @@ from .database import LawyerProfile, LawyerRecommendation, RecommendationStatus,
 class RouterAgent:
     def __init__(self):
         self.specializations = {
-            "property": ["property", "real estate", "land", "encroachment"],
-            "family": ["family", "divorce", "matrimonial", "custody"],
-            "contract": ["contract", "construction", "commercial", "breach"]
-        }
-    
+            "property": ["property", "real estate", "land", "encroachment", "rent"],
+            "family": ["family", "divorce", "matrimonial", "maintenance"],
+            "custody": ["custody", "child", "adoption", "guardian"],
+            "consumer": ["consumer", "contract", "commercial", "breach"],
+            "inheritance": ["inheritance", "will", "wills", "succession", "probate"],
+            }
     def get_top_lawyers(self, db: Session, case_issue_type: str, limit: int = 5) -> List[Dict]:
         """Match lawyers by specialization + availability."""
         spec_keywords = self.specializations.get(case_issue_type, [])
