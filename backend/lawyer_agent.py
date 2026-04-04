@@ -233,6 +233,7 @@ class LawyerAgent:
                 display_status = "Pending"
 
             client_name = c.client.name if c.client else "Unknown Client"
+            client_id = c.client.id if c.client else None
 
             result.append({
                 "id": r.id,
@@ -242,6 +243,7 @@ class LawyerAgent:
                 "case_type": c.issue_type,
                 "status": display_status,
                 "client_name": client_name,
+                "client_id": client_id,
             })
 
         return result

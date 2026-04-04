@@ -1,7 +1,9 @@
 from llama_cpp import Llama
 import re
+from config_paths import ROOT_DIR
 
-MODEL_PATH = r"C:\Users\91997\Desktop\legal_rag\models\qwen2.5-3b-instruct.Q4_K_M.gguf"
+# Model path configured in config_paths.py for portability
+MODEL_PATH = ROOT_DIR / "models" / "qwen2.5-3b-instruct.Q4_K_M.gguf"
 
 # ── Speed optimisations ──────────────────────────────────────────────────────
 #  n_ctx   : 2048 instead of 4096  → halves KV-cache memory, faster prefill
@@ -11,7 +13,7 @@ MODEL_PATH = r"C:\Users\91997\Desktop\legal_rag\models\qwen2.5-3b-instruct.Q4_K_
 #  f16_kv  : True                  → half-precision KV cache, 2× faster on CPU
 # ─────────────────────────────────────────────────────────────────────────────
 llm = Llama(
-    model_path=MODEL_PATH,
+    model_path=str(MODEL_PATH),
     n_ctx=2048,
     n_threads=12,
     n_batch=256,

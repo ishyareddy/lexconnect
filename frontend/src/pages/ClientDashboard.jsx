@@ -3,6 +3,7 @@ import Sidebar from "../components/Sidebar"
 import Chatbot from "../components/Chatbot"
 import CaseList from "../components/CaseList"
 import LawyerRecommendations from "../components/LawyerRecommendations"
+import CommunicationPanel from "../components/CommunicationPanel"
 
 const TABS = ["My Cases", "Find Lawyers"]
 
@@ -13,6 +14,8 @@ export default function ClientDashboard({ defaultTab = "My Cases", openNewCase =
   const [selectedCaseId, setSelectedCaseId] = useState(null)
   // cases fetched here so Chatbot can reference them by ID
   const [cases, setCases] = useState([])
+  const [showCommunication, setShowCommunication] = useState(false)
+  const [communicationPartner, setCommunicationPartner] = useState(null)
   const name = localStorage.getItem("name") || "Client"
   const token = localStorage.getItem("token")
 
@@ -39,6 +42,16 @@ export default function ClientDashboard({ defaultTab = "My Cases", openNewCase =
   setSelectedCaseId(caseId || null)
   setTab("Find Lawyers")
   }, [])
+
+  const handleChatWithLawyer = useCallback((lawyerId, lawyerName, caseId) => {
+    setCommunicationPartner({
+      userId: lawyerId,
+      userName: lawyerName,
+      caseId: caseId,
+    })
+    setShowCommunication(true)
+  }, [])
+
   // When CaseList creates a new case, refresh the cases list for Chatbot
   const handleCasesRefreshed = useCallback((updatedCases) => {
     if (Array.isArray(updatedCases)) setCases(updatedCases)
@@ -78,6 +91,7 @@ export default function ClientDashboard({ defaultTab = "My Cases", openNewCase =
                 autoOpenModal={openNewCase}
                 onFindLawyer={handleFindLawyer}
                 onCasesLoaded={handleCasesRefreshed}
+                onChatWithLawyer={handleChatWithLawyer}
               />
             )}
             {tab === "Find Lawyers" && (
@@ -95,6 +109,41 @@ export default function ClientDashboard({ defaultTab = "My Cases", openNewCase =
           )}
         </div>
       </div>
+
+      {showCommunication && communicationPartner && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0, 0, 0, 0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 2000,
+          padding: "20px"
+        }}>
+          <div style={{
+            width: "100%",
+            maxWidth: "900px",
+            height: "80vh",
+            borderRadius: "12px",
+            background: "white",
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)"
+          }}>
+            <CommunicationPanel
+              caseId={communicationPartner.caseId}
+              otherUserId={communicationPartner.userId}
+              otherUserName={communicationPartner.userName}
+              onClose={() => {
+                setShowCommunication(false)
+                setCommunicationPartner(null)
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
