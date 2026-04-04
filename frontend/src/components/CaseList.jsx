@@ -166,14 +166,16 @@ export default function CaseList({ autoOpenModal = false, onFindLawyer, onCasesL
                 </div>
 
                 <div className="case-card-actions" onClick={(e) => e.stopPropagation()}>
-                  {!c.assigned_lawyer && (
+                  {!c.assigned_lawyer && c.status !== "Closed" && c.status !== "Resolved" && (
                     <button
-                      className="btn-find-lawyer"
-                      onClick={() => onFindLawyer && onFindLawyer(c.case_type)}
+                    className="btn-find-lawyer"
+                    onClick={() => onFindLawyer && onFindLawyer(c.case_type, c.id)}
                     >
                       👨‍⚖️ Find Lawyer
-                    </button>
+                   </button>
                   )}
+                  
+
                   <button
                     className="btn-delete-case"
                     title="Delete case"

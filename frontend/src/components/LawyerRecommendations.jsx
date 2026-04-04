@@ -11,7 +11,7 @@ const SPEC_ICONS = {
   "General": "📜",
 }
 
-export default function LawyerRecommendations() {
+export default function LawyerRecommendations({ filterType = "all", onFilterChange, caseId }) {
   const [lawyers, setLawyers] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
@@ -37,13 +37,16 @@ export default function LawyerRecommendations() {
   }, [])
 
   async function requestLawyer(lawyerId) {
-    if (requestedId !== null) return  // already sent one request
+     if (!caseId) {
+      alert("Please select a case first.")
+      return
+}
     setRequesting(true)
     try {
       const res = await fetch("http://127.0.0.1:8000/request-lawyer", {
         method: "POST",
         headers,
-        body: JSON.stringify({ lawyer_id: lawyerId }),
+        body: JSON.stringify({ lawyer_id: lawyerId, case_id: caseId }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -139,7 +142,7 @@ export default function LawyerRecommendations() {
                 <button
                   className={`btn-request ${requestedId === l.id ? "requested" : ""}`}
                   onClick={() => requestLawyer(l.id)}
-                  disabled={requestedId !== null || requesting}
+                  disabled={requesting}
                   title={requestedId !== null && requestedId !== l.id ? "You have already sent a request" : ""}
                 >
                   {requesting && requestedId === null

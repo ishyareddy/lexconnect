@@ -10,6 +10,7 @@ export default function ClientDashboard({ defaultTab = "My Cases", openNewCase =
   const [tab, setTab] = useState(defaultTab)
   const [chatOpen, setChatOpen] = useState(true)
   const [lawyerFilter, setLawyerFilter] = useState("all")
+  const [selectedCaseId, setSelectedCaseId] = useState(null)
   // cases fetched here so Chatbot can reference them by ID
   const [cases, setCases] = useState([])
   const name = localStorage.getItem("name") || "Client"
@@ -33,11 +34,11 @@ export default function ClientDashboard({ defaultTab = "My Cases", openNewCase =
       .catch(() => setCases([]))
   }, [token])
 
-  const handleFindLawyer = useCallback((caseType) => {
-    setLawyerFilter(caseType || "all")
-    setTab("Find Lawyers")
+  const handleFindLawyer = useCallback((caseType, caseId) => {
+  setLawyerFilter(caseType || "all")
+  setSelectedCaseId(caseId || null)
+  setTab("Find Lawyers")
   }, [])
-
   // When CaseList creates a new case, refresh the cases list for Chatbot
   const handleCasesRefreshed = useCallback((updatedCases) => {
     if (Array.isArray(updatedCases)) setCases(updatedCases)
@@ -83,6 +84,7 @@ export default function ClientDashboard({ defaultTab = "My Cases", openNewCase =
               <LawyerRecommendations
                 filterType={lawyerFilter}
                 onFilterChange={setLawyerFilter}
+                caseId={selectedCaseId}
               />
             )}
           </div>
