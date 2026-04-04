@@ -30,6 +30,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     role = Column(Enum(UserRole), nullable=False)
     phone = Column(String(20), nullable=True)
+    location = Column(String(100), nullable=True)
     cases = relationship("Case", back_populates="client", cascade="all, delete-orphan")
     lawyer_profile = relationship("LawyerProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
@@ -38,6 +39,7 @@ class LawyerProfile(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     specialization = Column(String(100), nullable=True)
+    lawyer_type = Column(String(100), nullable=True)
     city = Column(String(100), nullable=True)
     experience_years = Column(Integer, nullable=True)
     rating = Column(Integer, nullable=True)

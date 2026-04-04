@@ -83,6 +83,8 @@ class RegisterInput(BaseModel):
     email: str
     password: str
     role: str
+    location: str = ""
+    lawyer_type: Optional[str] = None
 
 
 class StatusUpdate(BaseModel):
@@ -146,11 +148,18 @@ def register(payload: RegisterInput, db: Session = Depends(get_db)):
     if payload.role not in ("client", "lawyer"):
         raise HTTPException(400, "Role must be 'client' or 'lawyer'")
 
+    # Validate lawyer_type if registering as lawyer
+    LAWYER_TYPES = ["Property Law", "Family Law", "Custody & Adoption", "Consumer Rights & Commercial", "Inheritance & Succession"]
+    if payload.role == "lawyer" and payload.lawyer_type:
+        if payload.lawyer_type not in LAWYER_TYPES:
+            raise HTTPException(400, f"Invalid lawyer_type. Must be one of: {', '.join(LAWYER_TYPES)}")
+
     user = User(
         name=payload.name,
         email=payload.email,
         password_hash=sha256(payload.password.encode()).hexdigest(),
-        role=UserRole(payload.role)
+        role=UserRole(payload.role),
+        location=payload.location or ""
     )
     db.add(user)
     db.commit()
@@ -160,7 +169,8 @@ def register(payload: RegisterInput, db: Session = Depends(get_db)):
         profile = LawyerProfile(
             user_id=user.id,
             specialization="General",
-            city="Unknown",
+            lawyer_type=payload.lawyer_type or "General",
+            city=payload.location or "Unknown",
             experience_years=0,
             rating=0
         )
@@ -187,13 +197,23 @@ def login(
     if user.password_hash != hashed:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return {
+    response = {
         "access_token": str(user.id),
         "token_type": "bearer",
         "user_id": user.id,
         "name": user.name,
-        "role": user.role.value
+        "role": user.role.value,
+        "location": user.location or ""
     }
+    
+    # Add lawyer-specific fields if role is lawyer
+    if user.role == UserRole.lawyer:
+        lawyer_profile = db.query(LawyerProfile).filter(LawyerProfile.user_id == user.id).first()
+        if lawyer_profile:
+            response["lawyer_type"] = lawyer_profile.lawyer_type
+            response["city"] = lawyer_profile.city
+
+    return response
 
 
 # -----------------------------
@@ -301,7 +321,9 @@ def create_case(
     db.refresh(case)
 
     try:
-        lawyers = router.get_top_lawyers(db, case.issue_type)
+        client = db.query(User).filter(User.id == user.id).first()
+        client_location = client.location if client else ""
+        lawyers = router.get_top_lawyers(db, case.issue_type, client_location)
         if lawyers:
             router.create_recommendations(db, case.id, lawyers)
     except Exception:
@@ -416,7 +438,9 @@ def get_recommendations(case_id: int, db: Session = Depends(get_db)):
     if not case:
         raise HTTPException(404, "Case not found")
 
-    lawyers = router.get_top_lawyers(db, case.issue_type)
+    client = db.query(User).filter(User.id == case.client_id).first()
+    client_location = client.location if client else ""
+    lawyers = router.get_top_lawyers(db, case.issue_type, client_location)
     rec_ids = router.create_recommendations(db, case_id, lawyers)
 
     return {
@@ -434,6 +458,7 @@ def list_lawyers(db: Session = Depends(get_db)):
             "id": p.id,
             "name": p.user.name if p.user else "Unknown",
             "specialization": p.specialization,
+            "lawyer_type": p.lawyer_type,
             "city": p.city,
             "experience": p.experience_years,
             "rating": p.rating or 0,

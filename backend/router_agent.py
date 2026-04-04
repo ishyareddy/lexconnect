@@ -12,8 +12,8 @@ class RouterAgent:
             "consumer": ["consumer", "contract", "commercial", "breach"],
             "inheritance": ["inheritance", "will", "wills", "succession", "probate"],
             }
-    def get_top_lawyers(self, db: Session, case_issue_type: str, limit: int = 5) -> List[Dict]:
-        """Match lawyers by specialization + availability."""
+    def get_top_lawyers(self, db: Session, case_issue_type: str, client_location: str = "", limit: int = 5) -> List[Dict]:
+        """Match lawyers by specialization + location (same city) + availability."""
         spec_keywords = self.specializations.get(case_issue_type, [])
         
         lawyers = db.query(LawyerProfile).filter(
@@ -22,12 +22,18 @@ class RouterAgent:
         
         scored = []
         for lawyer in lawyers:
+            # Filter by same city if client_location is provided
+            if client_location and lawyer.city:
+                if lawyer.city.lower().strip() != client_location.lower().strip():
+                    continue
+            
             score = sum(1 for kw in spec_keywords if kw in (lawyer.specialization or "").lower())
             if score > 0:
                 scored.append({
                     "lawyer_id": lawyer.id,
                     "name": lawyer.user.name,
                     "specialization": lawyer.specialization,
+                    "lawyer_type": lawyer.lawyer_type,
                     "city": lawyer.city,
                     "experience_years": lawyer.experience_years,
                     "rating": lawyer.rating or 0,
