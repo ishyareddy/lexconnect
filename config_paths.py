@@ -1,7 +1,7 @@
 from pathlib import Path
 
 # Root project dir = this repo
-ROOT_DIR = Path(r"C:/Users/91997/Desktop/legal_rag")
+ROOT_DIR = Path(r"C:\Users\sahit\Downloads\lexconnect")
 
 DATA_DIR = ROOT_DIR / "data"
 PDF_DIR = DATA_DIR / "pdfs"

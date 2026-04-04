@@ -5,8 +5,10 @@ from sqlalchemy import create_engine
 from datetime import datetime
 import enum
 import os
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+DB_URL = os.getenv("LEGAL_RAG_DB_URL", f"sqlite:///{BASE_DIR / 'legal_rag.db'}")
 
-DB_URL = os.getenv("LEGAL_RAG_DB_URL", "sqlite:///./legal_rag.db")
 
 engine = create_engine(
     DB_URL,

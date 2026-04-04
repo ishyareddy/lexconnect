@@ -1,8 +1,7 @@
 from llama_cpp import Llama
 import re
 
-MODEL_PATH = r"C:\Users\91997\Desktop\legal_rag\models\qwen2.5-3b-instruct.Q4_K_M.gguf"
-
+MODEL_PATH = r"C:\Users\sahit\Downloads\lexconnect\models\qwen2.5-3b-instruct-q4_k_m.gguf"
 # ── Speed optimisations ──────────────────────────────────────────────────────
 #  n_ctx   : 2048 instead of 4096  → halves KV-cache memory, faster prefill
 #  n_batch : 256 instead of 512    → reduces per-batch memory pressure on CPU
