@@ -1,14 +1,11 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 
 const SPEC_ICONS = {
-  "Civil Law": "⚖️",
-  "Property Disputes": "🏠",
-  "Property Law": "🏠",
-  "Criminal Law": "🔒",
-  "Family Law": "👨‍👩‍👧",
-  "Corporate Law": "🏢",
-  "Tax Law": "📊",
-  "General": "📜",
+  "Property Disputes & Rent": "🏠",
+  "Marriage, Divorce & Maintenance": "👨‍👩‍👧",
+  "Child Custody & Adoption": "👶",
+  "Consumer Rights & Contracts": "📋",
+  "Inheritance & Wills": "📜",
 }
 
 export default function LawyerRecommendations({ filterType = "all", onFilterChange, caseId }) {
@@ -23,13 +20,17 @@ export default function LawyerRecommendations({ filterType = "all", onFilterChan
   const [requesting, setRequesting] = useState(false)
 
   const token = localStorage.getItem("token")
-  const headers = {
+  const headers = useMemo(() => ({
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  }
+  }), [token])
 
-useEffect(() => {
-  if (!caseId) {
+  useEffect(() => {
+    setFilter(filterType || "all")
+  }, [filterType])
+
+  useEffect(() => {
+    if (!caseId) {
     setLawyers([])
     setLoading(false)
     return
@@ -45,12 +46,16 @@ useEffect(() => {
     .then((d) => setLawyers(Array.isArray(d.recommendations) ? d.recommendations : []))
     .catch(() => setLawyers([]))
     .finally(() => setLoading(false))
-}, [caseId])
+  }, [caseId, headers])
+
   async function requestLawyer(lawyerId) {
-     if (!caseId) {
+    if (requesting || requestedId !== null) {
+      return
+    }
+    if (!caseId) {
       alert("Please select a case first.")
       return
-}
+    }
     setRequesting(true)
     try {
       const res = await fetch("http://127.0.0.1:8000/request-lawyer", {
@@ -93,7 +98,10 @@ useEffect(() => {
             <button
               key={s}
               className={`filter-pill ${filter === s ? "active" : ""}`}
-              onClick={() => setFilter(s)}
+              onClick={() => {
+                setFilter(s)
+                if (onFilterChange) onFilterChange(s)
+              }}
             >
               {s === "all" ? "⚖️ All" : `${SPEC_ICONS[s] || "📜"} ${s}`}
             </button>
@@ -152,7 +160,7 @@ useEffect(() => {
                 <button
                   className={`btn-request ${requestedId === l.id ? "requested" : ""}`}
                   onClick={() => requestLawyer(l.id)}
-                  disabled={requesting}
+                  disabled={requesting || requestedId !== null}
                   title={requestedId !== null && requestedId !== l.id ? "You have already sent a request" : ""}
                 >
                   {requesting && requestedId === null

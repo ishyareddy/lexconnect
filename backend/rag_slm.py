@@ -128,26 +128,77 @@ class CivilRAGSLM:
         if case_ctx:
             case_block = f"CASE:\n{case_ctx.strip()}\n\n"
 
-        # Simple one-line instruction per type
-        is_tenancy = any(kw in (question + " " + (case_ctx or "")).lower()
-                         for kw in ["rent", "tenant", "landlord", "evict", "flat", "lease"])
+        # Guided instructions based on case facts
+        context_text = (question + " " + (case_ctx or "")).lower()
+        if case_ctx and "custody" in context_text:
+            case_instruction = (
+                "This is a child custody case. Focus on the Guardians and Wards Act 1890 for custody and the welfare of the child. "
+                "If divorce is mentioned, also mention the Hindu Marriage Act 1955 for related matrimonial remedies. "
+                "Do not mention the Specific Relief Act, Hindu Adoptions and Maintenance Act, Indian Succession Act, Rent Control Act, or Transfer of Property Act unless the question explicitly asks about those topics."
+            )
+        elif case_ctx and ("issue type: family" in case_ctx.lower() or "divorce" in context_text or "maintenance" in context_text):
+            case_instruction = (
+                "This is a family law matter. Mention the Hindu Marriage Act 1955 for divorce and maintenance, "
+                "and the Guardians and Wards Act 1890 for any child custody issues. "
+                "Do not mention unrelated property, tenancy, or inheritance laws unless directly asked."
+            )
+        elif case_ctx and "issue type: property" in case_ctx.lower():
+            case_instruction = (
+                "This is a property dispute. Focus on the Transfer of Property Act 1882, the Registration Act 1908, "
+                "and the Hindu Succession Act 1956 for inheritance issues. "
+                "Do not mention child custody or domestic violence laws."
+            )
+        elif case_ctx and "issue type: tenancy" in case_ctx.lower():
+            case_instruction = (
+                "This is a tenancy dispute. Focus on the relevant state Rent Control Act and the Transfer of Property Act 1882. "
+                "Do not mention unrelated matrimonial or inheritance statutes."
+            )
+        elif case_ctx and "issue type: consumer" in case_ctx.lower():
+            case_instruction = (
+                "This is a consumer rights matter. Focus on the Consumer Protection Act 2019 and the correct complaint procedure. "
+                "Do not mention unrelated family, property, or tenancy laws."
+            )
+        elif case_ctx and "issue type: contract" in case_ctx.lower():
+            case_instruction = (
+                "This is a contract dispute. Focus on the Indian Contract Act 1872 and the Specific Relief Act 1963 for enforcement. "
+                "Do not mention unrelated family, tenancy, or inheritance laws."
+            )
+        else:
+            case_instruction = "Answer using the relevant Indian civil law area, without introducing unrelated statutes."
 
-        is_dv = any(kw in (question + " " + (case_ctx or "")).lower()
+        # Simple one-line instruction per type
+        is_tenancy = any(kw in context_text
+                         for kw in ["rent", "tenant", "landlord", "evict", "lease"])
+
+        is_dv = any(kw in context_text
                     for kw in ["abuse", "violent", "violence", "thrown", "lock", "beaten",
                                "domestic", "matrimonial home", "498", "cruelty", "husband"])
 
         if q_type == "procedural":
-            # "List the steps" causes the model to generate an outline skeleton.
-            # Forcing it to start with "Step 1" makes it write content immediately.
-            instruction = (
-                "Write the answer as complete numbered steps. "
-                "Each step must contain a full explanation — not just a heading. "
-                "Start writing Step 1 immediately with a complete sentence."
-            )
+            if case_ctx and "custody" in context_text:
+                instruction = (
+                    "First, explain the applicable Indian laws in simple terms. "
+                    "Then, provide complete numbered steps for what the person should do next. "
+                    "Each step must contain a full explanation — not just a heading. "
+                    "Start with the law explanation, then 'Step 1:' with the first action."
+                )
+            else:
+                instruction = (
+                    "Write the answer as complete numbered steps. "
+                    "Each step must contain a full explanation — not just a heading. "
+                    "Start writing Step 1 immediately with a complete sentence. "
+                    + case_instruction
+                )
         elif q_type == "definition":
-            instruction = "Explain what this means in simple English, and which Indian law it comes from."
+            instruction = (
+                "Explain what this means in simple English, and which Indian law it comes from. "
+                + case_instruction
+            )
         else:
-            instruction = "Name the relevant Indian law. Explain what rights it gives this person. Then say what they should do next."
+            instruction = (
+                "Name the relevant Indian law. Explain what rights it gives this person. Then say what they should do next. "
+                + case_instruction
+            )
 
         if is_tenancy:
             instruction += " For tenancy disputes, the correct law is the state Rent Control Act — NOT the Specific Relief Act."

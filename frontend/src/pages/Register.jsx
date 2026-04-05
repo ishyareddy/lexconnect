@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 
-const LAWYER_TYPES = ["Property Law", "Family Law", "Custody & Adoption", "Consumer Rights & Commercial", "Inheritance & Succession"]
+const LAWYER_TYPES = ["Property Disputes & Rent", "Marriage, Divorce & Maintenance", "Child Custody & Adoption", "Consumer Rights & Contracts", "Inheritance & Wills"]
 
 export default function Register() {
   const navigate = useNavigate()
@@ -10,7 +10,7 @@ export default function Register() {
   const [password, setPassword] = useState("")
   const [role, setRole] = useState("client")
   const [location, setLocation] = useState("")
-  const [lawyerType, setLawyerType] = useState("Property Law")
+  const [lawyerType, setLawyerType] = useState("Property Disputes & Rent")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 

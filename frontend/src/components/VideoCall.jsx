@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import "../styles/VideoCall.css"
+import Toast from "./Toast"
 
 export default function VideoCallComponent({ caseId, otherUserId, otherUserName, onClose }) {
   const [callId, setCallId] = useState(null)
@@ -7,6 +8,8 @@ export default function VideoCallComponent({ caseId, otherUserId, otherUserName,
   const [callStatus, setCallStatus] = useState("idle") // idle, initiating, active, completed
   const [loading, setLoading] = useState(false)
   const [pendingCalls, setPendingCalls] = useState([])
+  const [toastMessage, setToastMessage] = useState(null)
+  const lastPendingCallIdRef = useRef(null)
   const jitsiContainerRef = useRef(null)
   const jitsiApiRef = useRef(null)
   const token = localStorage.getItem("token")
@@ -27,6 +30,16 @@ export default function VideoCallComponent({ caseId, otherUserId, otherUserName,
         if (response.ok) {
           const data = await response.json()
           setPendingCalls(data)
+
+          if (data.length > 0) {
+            const newestCallId = data[0]?.call_id
+            if (newestCallId && newestCallId !== lastPendingCallIdRef.current) {
+              setToastMessage(`Incoming video call from ${data[0].initiator_name}`)
+              lastPendingCallIdRef.current = newestCallId
+            }
+          } else {
+            lastPendingCallIdRef.current = null
+          }
         }
       } catch (error) {
         console.error("Failed to fetch pending calls:", error)
@@ -63,6 +76,7 @@ export default function VideoCallComponent({ caseId, otherUserId, otherUserName,
         setCallId(data.call_id)
         setRoomName(data.room_name)
         setCallStatus("initiating")
+        setToastMessage(`Video call started with ${otherUserName}. Waiting for them to join.`)
       } else {
         alert("Failed to initiate call")
       }
@@ -76,14 +90,13 @@ export default function VideoCallComponent({ caseId, otherUserId, otherUserName,
 
   const acceptCall = async (incomingCallId) => {
     setCallId(incomingCallId)
-    // Fetch call details
+    // Fetch call details if needed, currently only to confirm the call exists
     try {
-      const response = await fetch(`http://127.0.0.1:8000/calls/${incomingCallId}`, {
+      await fetch(`http://127.0.0.1:8000/calls/${incomingCallId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
-      // Note: You might need to add this endpoint to get call details
     } catch (error) {
       console.error("Error:", error)
     }
@@ -97,7 +110,7 @@ export default function VideoCallComponent({ caseId, otherUserId, otherUserName,
     setPendingCalls(pendingCalls.filter((c) => c.call_id !== incomingCallId))
   }
 
-  const updateCallStatus = async (id, status) => {
+  const updateCallStatus = useCallback(async (id, status) => {
     try {
       await fetch(`http://127.0.0.1:8000/calls/${id}/status`, {
         method: "PATCH",
@@ -110,9 +123,9 @@ export default function VideoCallComponent({ caseId, otherUserId, otherUserName,
     } catch (error) {
       console.error("Failed to update call status:", error)
     }
-  }
+  }, [token])
 
-  const startJitsiMeet = (room) => {
+  const startJitsiMeet = useCallback((room) => {
     if (!jitsiContainerRef.current) return
 
     const domain = import.meta.env.VITE_JITSI_DOMAIN || "meet.jit.si"
@@ -182,7 +195,7 @@ export default function VideoCallComponent({ caseId, otherUserId, otherUserName,
     if (!document.querySelector(`script[src="https://${domain}/external_api.js"]`)) {
       document.head.appendChild(script)
     }
-  }
+  }, [userId, userName, callId, updateCallStatus])
 
   const endCall = () => {
     if (jitsiApiRef.current) {
@@ -202,7 +215,7 @@ export default function VideoCallComponent({ caseId, otherUserId, otherUserName,
     if (roomName && (callStatus === "initiating" || callStatus === "active")) {
       startJitsiMeet(roomName)
     }
-  }, [roomName])
+  }, [roomName, callStatus, startJitsiMeet])
 
   return (
     <div className="video-call-container">
@@ -272,6 +285,10 @@ export default function VideoCallComponent({ caseId, otherUserId, otherUserName,
             Close
           </button>
         </div>
+      )}
+
+      {toastMessage && (
+        <Toast title="Video Call" message={toastMessage} onDismiss={() => setToastMessage(null)} />
       )}
     </div>
   )

@@ -67,52 +67,91 @@ function extractCaseId(message) {
 }
 
 // cases prop: array of { id, title, description, case_type } passed from ClientDashboard
+const initialBotText = "Hello! I'm your AI legal assistant. Ask me anything about your case, legal procedures, or lawyer recommendations."
+
 export default function Chatbot({ cases = [] }) {
   const [message, setMessage] = useState("")
-  const [chat, setChat] = useState([
-    {
-      role: "bot",
-      text: "Hello! I'm your AI legal assistant. Ask me anything about your case, legal procedures, or lawyer recommendations.",
-    },
-  ])
+  const [chats, setChats] = useState(() => {
+    const saved = localStorage.getItem("legal_chat_history")
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        return parsed.length > 0 ? parsed : [{
+          id: Date.now(),
+          title: "New Chat",
+          messages: [{ role: "bot", text: initialBotText }],
+          activeCaseId: null,
+          createdAt: new Date().toISOString()
+        }]
+      } catch {
+        return [{
+          id: Date.now(),
+          title: "New Chat",
+          messages: [{ role: "bot", text: initialBotText }],
+          activeCaseId: null,
+          createdAt: new Date().toISOString()
+        }]
+      }
+    }
+    return [{
+      id: Date.now(),
+      title: "New Chat",
+      messages: [{ role: "bot", text: initialBotText }],
+      activeCaseId: null,
+      createdAt: new Date().toISOString()
+    }]
+  })
+  const [currentChatId, setCurrentChatId] = useState(() => chats[0]?.id || null)
   const [loading, setLoading] = useState(false)
-  const [activeCaseId, setActiveCaseId] = useState(null)
+  const [showHistory, setShowHistory] = useState(false)
+  const [editingChatId, setEditingChatId] = useState(null)
+  const [editTitle, setEditTitle] = useState("")
   const bottomRef = useRef(null)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [chat])
+    localStorage.setItem("legal_chat_history", JSON.stringify(chats))
+  }, [chats])
 
-  const activeCase = cases.find((c) => c.id === activeCaseId) || null
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [chats, currentChatId])
+
+  const currentChat = chats.find(c => c.id === currentChatId) || chats[0]
+  const activeCase = cases.find((c) => c.id === currentChat?.activeCaseId) || null
 
   const sendMessage = async () => {
-    if (!message.trim() || loading) return
+    if (!message.trim() || loading || !currentChat) return
     const userMsg = message.trim()
     setMessage("")
 
     // Auto-detect case reference in the message
     const mentionedCaseId = extractCaseId(userMsg)
-    let resolvedCaseId = activeCaseId
+    let resolvedCaseId = currentChat.activeCaseId
 
     if (mentionedCaseId !== null) {
       const exists = cases.find((c) => c.id === mentionedCaseId)
       if (exists) {
         resolvedCaseId = mentionedCaseId
-        setActiveCaseId(mentionedCaseId)
       } else {
-        setChat((prev) => [
-          ...prev,
-          { role: "user", text: userMsg },
-          {
-            role: "bot",
-            text: `I couldn't find Case #${mentionedCaseId} in your cases. Please check the case number and try again.`,
-          },
-        ])
+        setChats(prev => prev.map(chat =>
+          chat.id === currentChatId
+            ? { ...chat, messages: [...chat.messages, { role: "user", text: userMsg }, {
+                role: "bot",
+                text: `I couldn't find Case #${mentionedCaseId} in your cases. Please check the case number and try again.`,
+              }] }
+            : chat
+        ))
         return
       }
     }
 
-    setChat((prev) => [...prev, { role: "user", text: userMsg }])
+    // Update chat with user message
+    setChats(prev => prev.map(chat =>
+      chat.id === currentChatId
+        ? { ...chat, messages: [...chat.messages, { role: "user", text: userMsg }], activeCaseId: resolvedCaseId }
+        : chat
+    ))
+
     setLoading(true)
 
     try {
@@ -133,12 +172,22 @@ export default function Chatbot({ cases = [] }) {
       }
       const data = await res.json()
       const reply = data.answer?.trim() || "I'm unable to process that right now."
-      setChat((prev) => [...prev, { role: "bot", text: reply }])
+
+      // Update chat with bot response
+      setChats(prev => prev.map(chat =>
+        chat.id === currentChatId
+          ? { ...chat, messages: [...chat.messages, { role: "bot", text: reply }] }
+          : chat
+      ))
     } catch (err) {
       const msg = err.message?.includes("Failed to fetch")
         ? "Cannot reach the server. Make sure the backend is running on port 8000."
         : `Error: ${err.message}`
-      setChat((prev) => [...prev, { role: "bot", text: msg }])
+      setChats(prev => prev.map(chat =>
+        chat.id === currentChatId
+          ? { ...chat, messages: [...chat.messages, { role: "bot", text: msg }] }
+          : chat
+      ))
     } finally {
       setLoading(false)
     }
@@ -152,25 +201,163 @@ export default function Chatbot({ cases = [] }) {
   }
 
   const clearCaseContext = () => {
-    setActiveCaseId(null)
-    setChat((prev) => [
-      ...prev,
-      { role: "bot", text: "Case context cleared. Ask me anything about Indian civil law." },
-    ])
+    setChats(prev => prev.map(chat =>
+      chat.id === currentChatId
+        ? { ...chat, activeCaseId: null }
+        : chat
+    ))
+    setMessage((prev) => {
+      return prev.trim().match(/^Based on case #?\d+[,:]?\s*/i) ? "" : prev
+    })
+    setChats(prev => prev.map(chat =>
+      chat.id === currentChatId
+        ? { ...chat, messages: [...chat.messages, { role: "bot", text: "Case context cleared. Ask me anything about Indian civil law." }] }
+        : chat
+    ))
+  }
+
+  const startNewChat = () => {
+    const newChatId = Date.now()
+    const newChat = {
+      id: newChatId,
+      title: "New Chat",
+      messages: [{ role: "bot", text: initialBotText }],
+      activeCaseId: null,
+      createdAt: new Date().toISOString()
+    }
+    setChats(prev => [newChat, ...prev])
+    setCurrentChatId(newChatId)
+    setMessage("")
+  }
+
+  const switchChat = (chatId) => {
+    setCurrentChatId(chatId)
+    setMessage("")
+  }
+
+  const deleteChat = (chatId) => {
+    if (chats.length <= 1) return // Don't delete the last chat
+    setChats(prev => prev.filter(chat => chat.id !== chatId))
+    if (currentChatId === chatId) {
+      const remainingChats = chats.filter(chat => chat.id !== chatId)
+      setCurrentChatId(remainingChats[0]?.id || null)
+    }
+  }
+
+  const startEditingChat = (chatId, currentTitle) => {
+    setEditingChatId(chatId)
+    setEditTitle(currentTitle)
+  }
+
+  const saveChatTitle = () => {
+    if (editTitle.trim()) {
+      setChats(prev => prev.map(chat =>
+        chat.id === editingChatId
+          ? { ...chat, title: editTitle.trim() }
+          : chat
+      ))
+    }
+    setEditingChatId(null)
+    setEditTitle("")
+  }
+
+  const cancelEdit = () => {
+    setEditingChatId(null)
+    setEditTitle("")
   }
 
   return (
-    <div className="chatbot">
-      <div className="chatbot-header">
-        <div className="chatbot-dot" />
-        <span>AI Legal Assistant</span>
-      </div>
+    <div className="chatbot-container">
+      {/* Chat History Sidebar */}
+      {showHistory && (
+        <div className="chat-history-sidebar">
+          <div className="history-header">
+            <h3>Chat History</h3>
+            <button className="close-sidebar" onClick={() => setShowHistory(false)}>✕</button>
+          </div>
+          <div className="history-list">
+            {chats.map((chat) => (
+              <div key={chat.id} className={`history-item ${chat.id === currentChatId ? 'active' : ''}`}>
+                {editingChatId === chat.id ? (
+                  <div className="edit-title">
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveChatTitle()
+                        if (e.key === 'Escape') cancelEdit()
+                      }}
+                      autoFocus
+                    />
+                    <button onClick={saveChatTitle}>✓</button>
+                    <button onClick={cancelEdit}>✕</button>
+                  </div>
+                ) : (
+                  <div className="chat-title" onClick={() => switchChat(chat.id)}>
+                    <span className="title-text">{chat.title}</span>
+                    <div className="chat-actions">
+                      <button
+                        className="edit-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          startEditingChat(chat.id, chat.title)
+                        }}
+                        title="Rename chat"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        className="delete-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          deleteChat(chat.id)
+                        }}
+                        title="Delete chat"
+                        disabled={chats.length <= 1}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div className="chat-preview">
+                  {chat.messages.length > 1
+                    ? `${chat.messages[1]?.text?.slice(0, 50) || 'New chat'}...`
+                    : 'New chat'
+                  }
+                </div>
+                <div className="chat-date">
+                  {new Date(chat.createdAt).toLocaleDateString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="chatbot">
+        <div className="chatbot-header">
+          <div>
+            <button className="history-toggle" onClick={() => setShowHistory(!showHistory)}>
+              ☰
+            </button>
+            <div className="chatbot-dot" />
+            <span>AI Legal Assistant</span>
+            {currentChat && <span className="current-chat-title"> - {currentChat.title}</span>}
+          </div>
+          <div className="chatbot-actions">
+            <button className="chatbot-btn secondary" onClick={startNewChat}>
+              New chat
+            </button>
+          </div>
+        </div>
 
       {/* Active case banner */}
       {activeCase && (
         <div className="chatbot-case-banner">
           <span>
-            📁 <strong>Case #{activeCase.id}</strong>:{" "}
+            📁 <strong>Case {activeCase.id}</strong>: {" "}
             {(activeCase.title || activeCase.description || "").slice(0, 45)}
             {(activeCase.title || activeCase.description || "").length > 45 ? "…" : ""}
           </span>
@@ -181,7 +368,7 @@ export default function Chatbot({ cases = [] }) {
       )}
 
       <div className="chatbot-messages">
-        {chat.map((c, i) => (
+        {currentChat?.messages.map((c, i) => (
           <div key={i} className={`chat-msg ${c.role}`}>
             {c.role === "bot" && <div className="bot-avatar">⚖️</div>}
             <div className="msg-bubble">
@@ -200,23 +387,33 @@ export default function Chatbot({ cases = [] }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Quick-select case pills — shown only when no active case */}
-      {cases.length > 0 && !activeCase && (
-        <div className="chatbot-case-pills" style={{ overflowX: "auto", flexWrap: "nowrap" }}>
-          <span className="pills-label" style={{ whiteSpace: "nowrap" }}>Ask about a case:</span>
-          {cases.map((c) => (
-            <button
-              key={c.id}
-              className="case-pill"
-              style={{ whiteSpace: "nowrap", flexShrink: 0 }}
-              onClick={() => {
-                setActiveCaseId(c.id)
-                setMessage(`Based on case #${c.id}, `)
-              }}
-            >
-              Case #{c.id}
-            </button>
-          ))}
+      {/* Case context pills */}
+      {cases.length > 0 && (
+        <div className="chatbot-case-pills" style={{ overflowX: "auto" }}>
+          <span className="pills-label">Ask about a case:</span>
+          {cases.map((c) => {
+            const isActive = c.id === currentChat?.activeCaseId
+            return (
+              <button
+                key={c.id}
+                className={`case-pill${isActive ? " active" : ""}`}
+                onClick={() => {
+                  if (isActive) {
+                    clearCaseContext()
+                  } else {
+                    setChats(prev => prev.map(chat =>
+                      chat.id === currentChatId
+                        ? { ...chat, activeCaseId: c.id }
+                        : chat
+                    ))
+                    setMessage(`Based on case ${c.id}, `)
+                  }
+                }}
+              >
+                Case {c.id}
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -232,6 +429,7 @@ export default function Chatbot({ cases = [] }) {
           ➤
         </button>
       </div>
+    </div>
     </div>
   )
 }

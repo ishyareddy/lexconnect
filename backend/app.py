@@ -149,7 +149,7 @@ def register(payload: RegisterInput, db: Session = Depends(get_db)):
         raise HTTPException(400, "Role must be 'client' or 'lawyer'")
 
     # Validate lawyer_type if registering as lawyer
-    LAWYER_TYPES = ["Property Law", "Family Law", "Custody & Adoption", "Consumer Rights & Commercial", "Inheritance & Succession"]
+    LAWYER_TYPES = ["Property Disputes & Rent", "Marriage, Divorce & Maintenance", "Child Custody & Adoption", "Consumer Rights & Contracts", "Inheritance & Wills"]
     if payload.role == "lawyer" and payload.lawyer_type:
         if payload.lawyer_type not in LAWYER_TYPES:
             raise HTTPException(400, f"Invalid lawyer_type. Must be one of: {', '.join(LAWYER_TYPES)}")

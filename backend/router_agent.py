@@ -11,10 +11,18 @@ class RouterAgent:
             "custody": ["custody", "child", "adoption", "guardian"],
             "consumer": ["consumer", "contract", "commercial", "breach"],
             "inheritance": ["inheritance", "will", "wills", "succession", "probate"],
-            }
+        }
+        self.case_type_to_lawyer_type = {
+            "property": "Property Disputes & Rent",
+            "family": "Marriage, Divorce & Maintenance",
+            "custody": "Child Custody & Adoption",
+            "consumer": "Consumer Rights & Contracts",
+            "inheritance": "Inheritance & Succession",
+        }
     def get_top_lawyers(self, db: Session, case_issue_type: str, client_location: str = "", limit: int = 5) -> List[Dict]:
         """Match lawyers by specialization + location (same city) + availability."""
         spec_keywords = self.specializations.get(case_issue_type, [])
+        city_type = self.case_type_to_lawyer_type.get(case_issue_type, "")
         
         lawyers = db.query(LawyerProfile).filter(
             LawyerProfile.is_available == 1
@@ -27,18 +35,23 @@ class RouterAgent:
                 if lawyer.city.lower().strip() != client_location.lower().strip():
                     continue
             
-            score = sum(1 for kw in spec_keywords if kw in (lawyer.specialization or "").lower())
-            if score > 0:
-                scored.append({
-                    "lawyer_id": lawyer.id,
-                    "name": lawyer.user.name,
-                    "specialization": lawyer.specialization,
-                    "lawyer_type": lawyer.lawyer_type,
-                    "city": lawyer.city,
-                    "experience_years": lawyer.experience_years,
-                    "rating": lawyer.rating or 0,
-                    "score": score * 20 + (lawyer.experience_years or 0) * 2 + (lawyer.rating or 0)
-                })
+            exact_spec_count = sum(1 for kw in spec_keywords if kw in (lawyer.specialization or "").lower())
+            type_match_bonus = 30 if city_type and lawyer.lawyer_type == city_type else 0
+            rating_score = (lawyer.rating or 0) * 7
+            experience_score = min(lawyer.experience_years or 0, 20) * 1.5
+            score = exact_spec_count * 30 + type_match_bonus + rating_score + experience_score
+            
+            scored.append({
+                "id": lawyer.id,
+                "lawyer_id": lawyer.id,
+                "name": lawyer.user.name,
+                "specialization": lawyer.specialization,
+                "lawyer_type": lawyer.lawyer_type,
+                "city": lawyer.city,
+                "experience_years": lawyer.experience_years,
+                "rating": lawyer.rating or 0,
+                "score": score
+            })
         
         return sorted(scored, key=lambda x: x["score"], reverse=True)[:limit]
     
@@ -50,6 +63,13 @@ class RouterAgent:
         
         rec_ids = []
         for lawyer in lawyers:
+            existing = db.query(LawyerRecommendation).filter(
+                LawyerRecommendation.case_id == case_id,
+                LawyerRecommendation.lawyer_id == lawyer["lawyer_id"]
+            ).first()
+            if existing:
+                rec_ids.append(existing.id)
+                continue
             rec = LawyerRecommendation(
                 case_id=case_id,
                 lawyer_id=lawyer["lawyer_id"],

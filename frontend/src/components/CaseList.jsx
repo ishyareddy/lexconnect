@@ -297,7 +297,7 @@ export default function CaseList({ autoOpenModal = false, onFindLawyer, onCasesL
               {!detailCase.assigned_lawyer && (
                 <button
                   className="btn-primary"
-                  onClick={() => { setDetailCase(null); onFindLawyer && onFindLawyer(detailCase.case_type) }}
+                  onClick={() => { setDetailCase(null); onFindLawyer && onFindLawyer(detailCase.case_type, detailCase.id) }}
                 >
                   👨‍⚖️ Find Lawyer
                 </button>

@@ -11,7 +11,6 @@ export default function ChatWindow({ caseId, otherUserId, otherUserName }) {
   const messagesEndRef = useRef(null)
   const token = localStorage.getItem("token")
   const userId = parseInt(token)
-  const userName = localStorage.getItem("name")
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -20,13 +19,6 @@ export default function ChatWindow({ caseId, otherUserId, otherUserName }) {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
-
-  // Request notification permission on mount
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission()
-    }
-  }, [])
 
   useEffect(() => {
     console.log("ChatWindow mounted with:", { caseId, otherUserId, userId, token })
