@@ -212,10 +212,16 @@ class LawyerAgent:
         ).all()
 
         result = []
+        seen_case_ids = set()
         for r in recs:
             c = r.case
             if not c:
                 continue
+
+            # Skip duplicate cases (keep only the first recommendation per case)
+            if c.id in seen_case_ids:
+                continue
+            seen_case_ids.add(c.id)
 
             parts = c.description.split("\n\n", 1)
             title = parts[0].strip() if parts and parts[0].strip() else f"Case #{c.id}"

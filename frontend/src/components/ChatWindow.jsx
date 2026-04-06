@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from "react"
 import "../styles/ChatWindow.css"
 import MessageNotification from "./MessageNotification"
 
-export default function ChatWindow({ caseId, otherUserId, otherUserName }) {
+export default function ChatWindow({ caseId, cases = [], otherUserId, otherUserName }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [newMessageNotification, setNewMessageNotification] = useState(null)
   const [lastMessageId, setLastMessageId] = useState(null)
+  const [activeCaseId, setActiveCaseId] = useState(caseId || null)
   const messagesEndRef = useRef(null)
   const token = localStorage.getItem("token")
   const userId = parseInt(token)
@@ -21,7 +22,11 @@ export default function ChatWindow({ caseId, otherUserId, otherUserName }) {
   }, [messages])
 
   useEffect(() => {
-    console.log("ChatWindow mounted with:", { caseId, otherUserId, userId, token })
+    setActiveCaseId(caseId || null)
+  }, [caseId])
+
+  useEffect(() => {
+    console.log("ChatWindow mounted with:", { caseId, activeCaseId, otherUserId, userId, token })
     if (!otherUserId || !token) {
       console.warn("Missing otherUserId or token", { otherUserId, token })
       return
@@ -30,12 +35,12 @@ export default function ChatWindow({ caseId, otherUserId, otherUserName }) {
     const fetchMessages = async () => {
       try {
         const url = new URL("http://127.0.0.1:8000/messages/conversation/" + otherUserId)
-        if (caseId) {
-          url.searchParams.append("case_id", caseId)
+        if (activeCaseId) {
+          url.searchParams.append("case_id", activeCaseId)
         }
 
         console.log("Fetching messages from:", url.toString())
-        const response = await fetch(url, {
+        const response = await fetch(url.toString(), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -71,13 +76,13 @@ export default function ChatWindow({ caseId, otherUserId, otherUserName }) {
     fetchMessages()
     const interval = setInterval(fetchMessages, 1000)  // Poll every 1 second for real-time feel
     return () => clearInterval(interval)
-  }, [otherUserId, caseId, token, userId, lastMessageId])
+  }, [otherUserId, activeCaseId, token, userId, lastMessageId])
 
   const handleSendMessage = async (e) => {
     e.preventDefault()
     if (!input.trim()) return
 
-    console.log("Sending message:", { otherUserId, caseId, content: input })
+    console.log("Sending message:", { otherUserId, activeCaseId, content: input })
     setLoading(true)
     try {
       const response = await fetch("http://127.0.0.1:8000/messages/send", {
@@ -89,7 +94,7 @@ export default function ChatWindow({ caseId, otherUserId, otherUserName }) {
         body: JSON.stringify({
           recipient_id: otherUserId,
           content: input,
-          case_id: caseId || null,
+          case_id: activeCaseId || null,
         }),
       })
 
@@ -118,7 +123,35 @@ export default function ChatWindow({ caseId, otherUserId, otherUserName }) {
       </div>
 
       <div className="messages-container">
-        {messages.length === 0 ? (
+        <div className="case-context-bar">
+        <div className="case-context-label">Case context:</div>
+        <button
+          className={`case-pill${activeCaseId === null ? " active" : ""}`}
+          onClick={() => setActiveCaseId(null)}
+        >
+          All Cases
+        </button>
+        {cases.map((c) => {
+          const id = c.case_id || c.id
+          const title = c.title || `Case #${id}`
+          return (
+            <button
+              key={id}
+              className={`case-pill${activeCaseId === id ? " active" : ""}`}
+              onClick={() => setActiveCaseId(id)}
+            >
+              {title}
+            </button>
+          )
+        })}
+        {activeCaseId && (
+          <button className="clear-context" onClick={() => setActiveCaseId(null)}>
+            Clear
+          </button>
+        )}
+      </div>
+
+      {messages.length === 0 ? (
           <div className="no-messages">No messages yet. Start the conversation!</div>
         ) : (
           messages.map((msg) => (

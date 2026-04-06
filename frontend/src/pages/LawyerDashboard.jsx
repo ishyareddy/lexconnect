@@ -112,6 +112,7 @@ export default function LawyerDashboard() {
   ])
   const [slmInput, setSlmInput] = useState("")
   const [slmLoading, setSlmLoading] = useState(false)
+  const [slmActiveCaseId, setSlmActiveCaseId] = useState(null)
 
   const bottomRef = useRef(null)
   const slmBottomRef = useRef(null)
@@ -141,8 +142,17 @@ export default function LawyerDashboard() {
       const res = await fetch("http://127.0.0.1:8000/lawyer/cases", { headers })
       const data = await res.json()
       const all = Array.isArray(data) ? data : []
-      setRequests(all.filter((r) => r.status === "Pending"))
-      setActiveCases(all.filter((r) => r.status === "In Progress"))
+      
+      // Deduplicate by case_id (keep first occurrence)
+      const seen = new Set()
+      const deduped = all.filter(r => {
+        if (seen.has(r.case_id)) return false
+        seen.add(r.case_id)
+        return true
+      })
+      
+      setRequests(deduped.filter((r) => r.status === "Pending"))
+      setActiveCases(deduped.filter((r) => r.status === "In Progress"))
     } catch {
       setRequests([])
       setActiveCases([])
@@ -223,10 +233,15 @@ export default function LawyerDashboard() {
     setSlmLoading(true)
 
     try {
+      const body = {
+        message: text,
+        ...(slmActiveCaseId !== null ? { case_id: slmActiveCaseId } : {}),
+      }
+
       const res = await fetch("http://127.0.0.1:8000/chat", {
         method: "POST",
         headers,
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify(body),
       })
 
       if (!res.ok) {
@@ -255,6 +270,10 @@ export default function LawyerDashboard() {
       e.preventDefault()
       sendSlmMessage()
     }
+  }
+
+  const clearSlmCaseContext = () => {
+    setSlmActiveCaseId(null)
   }
 
   const navItems = [
@@ -490,6 +509,41 @@ export default function LawyerDashboard() {
               <span style={s.assistantNote}>AI-powered · Indian Civil Law</span>
             </div>
 
+            {activeCases.length > 0 && (
+              <div style={s.slmCaseBar}>
+                <span style={s.slmCaseLabel}>Case context:</span>
+                <button
+                  style={{
+                    ...s.slmCasePill,
+                    ...(slmActiveCaseId === null ? s.slmCasePillActive : {}),
+                  }}
+                  onClick={() => setSlmActiveCaseId(null)}
+                >
+                  All Cases
+                </button>
+                {activeCases.map((c) => {
+                  const id = c.case_id || c.id
+                  return (
+                    <button
+                      key={id}
+                      style={{
+                        ...s.slmCasePill,
+                        ...(slmActiveCaseId === id ? s.slmCasePillActive : {}),
+                      }}
+                      onClick={() => setSlmActiveCaseId(id)}
+                    >
+                      {c.title || `Case #${id}`}
+                    </button>
+                  )
+                })}
+                {slmActiveCaseId !== null && (
+                  <button style={s.slmClearBtn} onClick={clearSlmCaseContext}>
+                    Clear
+                  </button>
+                )}
+              </div>
+            )}
+
             <div style={s.assistantMessages}>
               {slmChat.map((m, i) => (
                 <div
@@ -560,6 +614,7 @@ export default function LawyerDashboard() {
           }} onClick={(e) => e.stopPropagation()}>
             <CommunicationPanel
               caseId={selectedCase.case_id || selectedCase.id}
+              cases={activeCases.filter((c) => c.client_id === selectedCase.client_id)}
               otherUserId={selectedCase.client_id}
               otherUserName={selectedCase.client_name}
               onClose={() => setSelectedCase(null)}
@@ -914,6 +969,40 @@ const s = {
   assistantTitle: { fontSize: 15, fontWeight: 700, color: "#e2e8f0" },
   assistantNote: { fontSize: 12, color: "#64748b" },
   chatbotDot: { width: 8, height: 8, borderRadius: "50%", background: "#10b981" },
+  slmCaseBar: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+    padding: "14px 20px",
+    borderBottom: "1px solid #1e2d45",
+    background: "#0b1221",
+  },
+  slmCaseLabel: { fontSize: 12, color: "#94a3b8", fontWeight: 600 },
+  slmCasePill: {
+    border: "1px solid #1e2d45",
+    background: "#12203a",
+    color: "#e2e8f0",
+    padding: "8px 12px",
+    borderRadius: 999,
+    cursor: "pointer",
+    fontSize: 12,
+  },
+  slmCasePillActive: {
+    background: "#4338ca",
+    borderColor: "#4338ca",
+    color: "#fff",
+  },
+  slmClearBtn: {
+    marginLeft: "auto",
+    border: "1px solid #1e2d45",
+    background: "transparent",
+    color: "#f8fafc",
+    padding: "8px 12px",
+    borderRadius: 999,
+    cursor: "pointer",
+    fontSize: 12,
+  },
 
   assistantMessages: {
     flex: 1,

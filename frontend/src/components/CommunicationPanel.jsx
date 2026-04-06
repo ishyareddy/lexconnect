@@ -5,6 +5,7 @@ import "../styles/CommunicationPanel.css"
 
 export default function CommunicationPanel({ 
   caseId, 
+  cases = [],
   otherUserId, 
   otherUserName,
   onClose 
@@ -37,6 +38,7 @@ export default function CommunicationPanel({
         {activeTab === "chat" && (
           <ChatWindow 
             caseId={caseId}
+            cases={cases}
             otherUserId={otherUserId}
             otherUserName={otherUserName}
           />

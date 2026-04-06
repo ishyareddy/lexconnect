@@ -7,8 +7,6 @@ __pycache__/
 # Virtual env
 .venv/
 
-# Database
-*.db
 
 # Node
 node_modules/
@@ -42,6 +40,6 @@ models/
 *.pth
 
 # Dataset
-data/
+
 
 add_new_pdfs.py

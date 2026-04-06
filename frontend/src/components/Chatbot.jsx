@@ -344,7 +344,9 @@ export default function Chatbot({ cases = [] }) {
             </button>
             <div className="chatbot-dot" />
             <span>AI Legal Assistant</span>
-            {currentChat && <span className="current-chat-title"> - {currentChat.title}</span>}
+            {currentChat?.title && currentChat.title !== "New Chat" && (
+              <span className="current-chat-title"> - {currentChat.title}</span>
+            )}
           </div>
           <div className="chatbot-actions">
             <button className="chatbot-btn secondary" onClick={startNewChat}>
