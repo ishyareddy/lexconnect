@@ -103,6 +103,8 @@ export default function LawyerDashboard() {
   const [chatInput, setChatInput] = useState("")
   const [chatSending, setChatSending] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [assistantCases, setAssistantCases] = useState([])
+  const [activeAssistantCaseId, setActiveAssistantCaseId] = useState(null)
 
   const [slmChat, setSlmChat] = useState([
     {
@@ -141,8 +143,22 @@ export default function LawyerDashboard() {
       const res = await fetch("http://127.0.0.1:8000/lawyer/cases", { headers })
       const data = await res.json()
       const all = Array.isArray(data) ? data : []
-      setRequests(all.filter((r) => r.status === "Pending"))
-      setActiveCases(all.filter((r) => r.status === "In Progress"))
+      const pending = all.filter((r) => r.status === "Pending")
+      const active = all.filter((r) => r.status === "In Progress")
+      setRequests(pending)
+      setActiveCases(active)
+      const mappedAssistantCases = active.map((r) => ({
+        id: r.caseid,
+        title: r.title || `Case #${r.caseid}`,
+        description: r.description || "",
+        casetype: r.casetype || "general",
+        status: r.status,
+      }))
+      setAssistantCases(mappedAssistantCases)
+      setActiveAssistantCaseId((prev) => {
+        if (mappedAssistantCases.some((c) => c.id === prev)) return prev
+        return mappedAssistantCases[0]?.id ?? null
+      })
     } catch {
       setRequests([])
       setActiveCases([])
@@ -226,7 +242,8 @@ export default function LawyerDashboard() {
       const res = await fetch("http://127.0.0.1:8000/chat", {
         method: "POST",
         headers,
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ 
+          message: text }),
       })
 
       if (!res.ok) {

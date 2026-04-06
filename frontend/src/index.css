@@ -854,18 +854,49 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
 /* ── Chat History Sidebar ──────────────────────────── */
 .chatbot-container {
-  display: flex;
-  height: 100%;
   position: relative;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.chatbot {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.chat-history-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(2px);
+  z-index: 20;
 }
 
 .chat-history-sidebar {
-  width: 280px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 320px;
+  max-width: 85%;
+  height: 100%;
   background: var(--navy-2);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  z-index: 30;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  box-shadow: 12px 0 30px rgba(0, 0, 0, 0.35);
+}
+
+.chat-history-sidebar.open {
+  transform: translateX(0);
 }
 
 .history-header {
