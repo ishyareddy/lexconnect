@@ -40,6 +40,6 @@ models/
 *.pth
 
 # Dataset
-
+*.db
 
 add_new_pdfs.py
