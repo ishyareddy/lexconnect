@@ -10,7 +10,6 @@ const TABS = ["My Cases", "Find Lawyers"]
 export default function ClientDashboard({ defaultTab = "My Cases", openNewCase = false }) {
   const [tab, setTab] = useState(defaultTab)
   const [chatOpen, setChatOpen] = useState(true)
-  const [lawyerFilter, setLawyerFilter] = useState("all")
   const [selectedCaseId, setSelectedCaseId] = useState(null)
   // cases fetched here so Chatbot can reference them by ID
   const [cases, setCases] = useState([])
@@ -38,7 +37,6 @@ export default function ClientDashboard({ defaultTab = "My Cases", openNewCase =
   }, [token])
 
   const handleFindLawyer = useCallback((caseType, caseId) => {
-  setLawyerFilter(caseType || "all")
   setSelectedCaseId(caseId || null)
   setTab("Find Lawyers")
   }, [])
@@ -95,11 +93,7 @@ export default function ClientDashboard({ defaultTab = "My Cases", openNewCase =
               />
             )}
             {tab === "Find Lawyers" && (
-              <LawyerRecommendations
-                filterType={lawyerFilter}
-                onFilterChange={setLawyerFilter}
-                caseId={selectedCaseId}
-              />
+              <LawyerRecommendations caseId={selectedCaseId} />
             )}
           </div>
           {chatOpen && (

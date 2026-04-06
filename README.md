@@ -15,7 +15,7 @@ AI-powered legal assistance platform that helps clients find lawyers and get ins
 # Setup
 
 Clone repository
-git clone https://github.com/YOUR_USERNAME/lexconnect.git
+git clone https://github.com/ishyareddy/lexconnect.git
 cd lexconnect
 
 Download:

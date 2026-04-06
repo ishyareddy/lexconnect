@@ -103,6 +103,8 @@ export default function LawyerDashboard() {
   const [chatInput, setChatInput] = useState("")
   const [chatSending, setChatSending] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [assistantCases, setAssistantCases] = useState([])
+  const [activeAssistantCaseId, setActiveAssistantCaseId] = useState(null)
 
   const [slmChat, setSlmChat] = useState([
     {

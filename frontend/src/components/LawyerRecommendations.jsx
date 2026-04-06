@@ -8,67 +8,67 @@ const SPEC_ICONS = {
   "Inheritance & Wills": "📜",
 }
 
-export default function LawyerRecommendations({ filterType = "all", onFilterChange, caseId }) {
+export default function LawyerRecommendations({ caseId }) {
   const [lawyers, setLawyers] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState("all")
-
-  // ✅ Single request enforcement:
-  // requestedId tracks which ONE lawyer has been requested (null = none yet)
-  // Once set, all other buttons become disabled and show their normal label
   const [requestedId, setRequestedId] = useState(null)
   const [requesting, setRequesting] = useState(false)
 
   const token = localStorage.getItem("token")
-  const headers = useMemo(() => ({
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  }), [token])
 
-  useEffect(() => {
-    setFilter(filterType || "all")
-  }, [filterType])
+  const headers = useMemo(
+    () => ({
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    }),
+    [token]
+  )
 
   useEffect(() => {
     if (!caseId) {
-    setLawyers([])
-    setLoading(false)
-    return
-  }
+      setLawyers([])
+      setLoading(false)
+      return
+    }
 
-  setLoading(true)
+    setLoading(true)
 
-  fetch(`http://127.0.0.1:8000/cases/${caseId}/recommendations`, {
-    method: "POST",
-    headers,
-  })
-    .then((r) => r.json())
-    .then((d) => setLawyers(Array.isArray(d.recommendations) ? d.recommendations : []))
-    .catch(() => setLawyers([]))
-    .finally(() => setLoading(false))
+    fetch(`http://127.0.0.1:8000/cases/${caseId}/recommendations`, {
+      method: "POST",
+      headers,
+    })
+      .then((r) => r.json())
+      .then((d) => setLawyers(Array.isArray(d.recommendations) ? d.recommendations : []))
+      .catch(() => setLawyers([]))
+      .finally(() => setLoading(false))
   }, [caseId, headers])
 
   async function requestLawyer(lawyerId) {
-    if (requesting || requestedId !== null) {
-      return
-    }
+    if (requesting || requestedId !== null) return
+
     if (!caseId) {
       alert("Please select a case first.")
       return
     }
+
     setRequesting(true)
+
     try {
       const res = await fetch("http://127.0.0.1:8000/request-lawyer", {
         method: "POST",
         headers,
-        body: JSON.stringify({ lawyer_id: lawyerId, case_id: caseId }),
+        body: JSON.stringify({
+          lawyer_id: lawyerId,
+          case_id: caseId,
+        }),
       })
+
       if (!res.ok) {
         const data = await res.json()
         alert(data.detail || "Request failed. Make sure you have an open case first.")
         return
       }
-      // Lock in this lawyer — no more requests allowed
+
       setRequestedId(lawyerId)
     } catch {
       alert("Request failed. Try again.")
@@ -77,13 +77,6 @@ export default function LawyerRecommendations({ filterType = "all", onFilterChan
     }
   }
 
-  // Unique specializations for filter pills
-  const specializations = ["all", ...new Set(lawyers.map((l) => l.specialization).filter(Boolean))]
-
-  const displayed = filter === "all"
-    ? lawyers
-    : lawyers.filter((l) => l.specialization === filter)
-
   return (
     <div className="lawyer-list">
       <div className="case-list-header">
@@ -91,41 +84,23 @@ export default function LawyerRecommendations({ filterType = "all", onFilterChan
         <span className="lawyer-count">{lawyers.length} available</span>
       </div>
 
-      {/* Filter pills */}
-      {lawyers.length > 0 && (
-        <div className="filter-pills">
-          {specializations.map((s) => (
-            <button
-              key={s}
-              className={`filter-pill ${filter === s ? "active" : ""}`}
-              onClick={() => {
-                setFilter(s)
-                if (onFilterChange) onFilterChange(s)
-              }}
-            >
-              {s === "all" ? "⚖️ All" : `${SPEC_ICONS[s] || "📜"} ${s}`}
-            </button>
-          ))}
-        </div>
-      )}
-
       {loading ? (
         <div className="loading-state">Finding advocates...</div>
-      ) : displayed.length === 0 ? (
+      ) : lawyers.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">👨‍⚖️</div>
           <p>No advocates available at the moment.</p>
         </div>
       ) : (
         <div className="lawyers-grid">
-          {displayed.map((l, idx) => {
+          {lawyers.map((l, idx) => {
             const rating = l.rating || 0
             const exp = l.experience_years || l.experience || 0
             const spec = l.specialization || "General"
+
             return (
               <div key={l.id} className="lawyer-card">
-                {/* Rank badge for top 3 */}
-                {idx < 3 && filter === "all" && (
+                {idx < 3 && (
                   <div className={`lawyer-rank rank-${idx + 1}`}>
                     {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
                   </div>
@@ -148,9 +123,11 @@ export default function LawyerRecommendations({ filterType = "all", onFilterChan
                         <span className="rating-num"> {rating}/5</span>
                       </span>
                     )}
+
                     {exp > 0 && (
                       <span className="lawyer-exp">🗓 {exp} yrs</span>
                     )}
+
                     {l.city && (
                       <span className="lawyer-city">📍 {l.city}</span>
                     )}
@@ -161,7 +138,11 @@ export default function LawyerRecommendations({ filterType = "all", onFilterChan
                   className={`btn-request ${requestedId === l.id ? "requested" : ""}`}
                   onClick={() => requestLawyer(l.id)}
                   disabled={requesting || requestedId !== null}
-                  title={requestedId !== null && requestedId !== l.id ? "You have already sent a request" : ""}
+                  title={
+                    requestedId !== null && requestedId !== l.id
+                      ? "You have already sent a request"
+                      : ""
+                  }
                 >
                   {requesting && requestedId === null
                     ? "..."
