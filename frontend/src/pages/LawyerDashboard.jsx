@@ -92,6 +92,420 @@ const CASE_TYPE_ICONS = {
   general: "⚖️",
 }
 
+const s = {
+  shell: {
+    display: "flex",
+    height: "100vh",
+    background: "#0a0f1e",
+    color: "#e2e8f0",
+    fontFamily: "Inter, sans-serif",
+    overflow: "hidden",
+  },
+
+  sidebar: {
+    width: 240,
+    minWidth: 240,
+    background: "#0d1424",
+    borderRight: "1px solid #1e2d45",
+    display: "flex",
+    flexDirection: "column",
+    padding: "24px 0",
+    overflowY: "auto",
+  },
+  brand: {
+    fontSize: 22,
+    fontWeight: 800,
+    letterSpacing: 1,
+    padding: "0 20px 20px",
+    color: "#e2e8f0",
+  },
+  gold: { color: "#d4af37" },
+  userBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "0 16px 24px",
+    borderBottom: "1px solid #1e2d45",
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: "50%",
+    background: "#1e3a5f",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 700,
+    fontSize: 15,
+    color: "#93c5fd",
+    flexShrink: 0,
+  },
+  userName: { fontSize: 13, fontWeight: 600, color: "#e2e8f0" },
+  userRole: { fontSize: 11, color: "#d4af37", marginTop: 1 },
+  nav: { padding: "16px 12px 0", display: "flex", flexDirection: "column", gap: 4 },
+  navBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "10px 12px",
+    borderRadius: 8,
+    background: "transparent",
+    border: "none",
+    color: "#94a3b8",
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 500,
+    textAlign: "left",
+    width: "100%",
+    transition: "all 0.15s",
+  },
+  navBtnActive: { background: "#1e2d45", color: "#e2e8f0" },
+  badge: {
+    background: "#1e2d45",
+    color: "#94a3b8",
+    borderRadius: 10,
+    fontSize: 11,
+    padding: "2px 7px",
+    fontWeight: 600,
+  },
+  badgeGold: { background: "#78350f", color: "#fbbf24" },
+  sidebarCases: { padding: "16px 12px 0", borderTop: "1px solid #1e2d45", marginTop: 16 },
+  sidebarCasesTitle: {
+    fontSize: 11,
+    color: "#64748b",
+    fontWeight: 600,
+    padding: "0 4px 8px",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  sidebarCaseBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "8px 10px",
+    borderRadius: 6,
+    background: "transparent",
+    border: "none",
+    color: "#94a3b8",
+    cursor: "pointer",
+    fontSize: 12,
+    textAlign: "left",
+    width: "100%",
+    transition: "all 0.15s",
+  },
+  sidebarCaseBtnActive: { background: "#1e2d45", color: "#e2e8f0" },
+  sidebarCaseName: { flex: 1, fontSize: 12 },
+  logoutBtn: {
+    margin: "auto 12px 20px",
+    padding: "10px",
+    borderRadius: 8,
+    background: "transparent",
+    border: "1px solid #1e2d45",
+    color: "#94a3b8",
+    cursor: "pointer",
+    fontSize: 12,
+    width: "calc(100% - 24px)",
+    transition: "all 0.15s",
+  },
+  logoutBtnHover: { background: "#1e2d45", color: "#e2e8f0" },
+
+  main: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+
+  panel: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    background: "#0d1424",
+    borderRadius: "12px",
+    margin: "20px",
+    overflow: "hidden",
+  },
+  panelHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "20px",
+    borderBottom: "1px solid #1e2d45",
+    flexShrink: 0,
+  },
+  panelTitle: { fontSize: 18, fontWeight: 700, color: "#e2e8f0" },
+  refreshBtn: {
+    padding: "8px 12px",
+    borderRadius: 6,
+    background: "#1e3a5f",
+    border: "none",
+    color: "#93c5fd",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 600,
+  },
+
+  empty: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    padding: "40px 20px",
+  },
+  emptyIcon: { fontSize: 48, marginBottom: 16, opacity: 0.5 },
+  emptyText: { fontSize: 14, color: "#64748b", marginBottom: 8 },
+  emptySubtext: { fontSize: 12, color: "#475569" },
+
+  stack: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 16,
+  },
+
+  caseCard: {
+    background: "#111827",
+    border: "1px solid #1e2d45",
+    borderRadius: 12,
+    padding: 0,
+    overflow: "hidden",
+    transition: "border-color 0.2s",
+  },
+  caseCardHover: { borderColor: "#374151" },
+  caseCardLeft: { padding: "16px" },
+  caseCardTop: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 },
+  caseTypeTag: {
+    background: "#1e3a5f",
+    color: "#93c5fd",
+    padding: "4px 8px",
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: 600,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    display: "inline-block",
+  },
+  caseTitle: { fontSize: 16, fontWeight: 600, color: "#e2e8f0", marginBottom: 4 },
+  caseDesc: { fontSize: 13, color: "#94a3b8", lineHeight: 1.5 },
+  clientName: { fontSize: 12, color: "#64748b", marginTop: 8 },
+  caseActions: {
+    display: "flex",
+    gap: 8,
+    padding: "12px 16px",
+    background: "#0a0f1e",
+    borderTop: "1px solid #1e2d45",
+  },
+  acceptBtn: {
+    flex: 1,
+    padding: "8px 12px",
+    borderRadius: 6,
+    background: "#10b981",
+    border: "none",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 600,
+  },
+  rejectBtn: {
+    flex: 1,
+    padding: "8px 12px",
+    borderRadius: 6,
+    background: "transparent",
+    border: "1px solid #ef4444",
+    color: "#ef4444",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 600,
+  },
+  chatBtn: {
+    flex: 1,
+    padding: "8px 12px",
+    borderRadius: 6,
+    background: "#3b82f6",
+    border: "none",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 600,
+  },
+  resolveBtn: {
+    flex: 1,
+    padding: "8px 12px",
+    borderRadius: 6,
+    background: "#8b5cf6",
+    border: "none",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 600,
+  },
+
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+  },
+
+  assistantShell: { display: "flex", flexDirection: "column", height: "100vh", background: "#0d1424" },
+  assistantHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "14px 20px",
+    borderBottom: "1px solid #1e2d45",
+    flexShrink: 0,
+  },
+  assistantHeaderLeft: { display: "flex", alignItems: "center", gap: 10 },
+  assistantTitle: { fontSize: 15, fontWeight: 700, color: "#e2e8f0" },
+  assistantNote: { fontSize: 12, color: "#64748b" },
+  chatbotDot: { width: 8, height: 8, borderRadius: "50%", background: "#10b981" },
+  slmCaseBar: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+    padding: "14px 20px",
+    borderBottom: "1px solid #1e2d45",
+    background: "#0b1221",
+  },
+  slmCaseLabel: { fontSize: 12, color: "#94a3b8", fontWeight: 600 },
+  slmCasePill: {
+    border: "1px solid #1e2d45",
+    background: "#12203a",
+    color: "#e2e8f0",
+    padding: "8px 12px",
+    borderRadius: 999,
+    cursor: "pointer",
+    fontSize: 12,
+  },
+  slmCasePillActive: {
+    background: "#4338ca",
+    borderColor: "#4338ca",
+    color: "#fff",
+  },
+  slmClearBtn: {
+    marginLeft: "auto",
+    border: "1px solid #1e2d45",
+    background: "transparent",
+    color: "#f8fafc",
+    padding: "8px 12px",
+    borderRadius: 999,
+    cursor: "pointer",
+    fontSize: 12,
+  },
+
+  assistantMessages: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "16px 20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 14,
+  },
+  chatMsg: { display: "flex", alignItems: "flex-start", gap: 10 },
+  chatMsgBot: { flexDirection: "row" },
+  chatMsgUser: { flexDirection: "row-reverse" },
+  botAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: "50%",
+    background: "#1e3a5f",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 13,
+    flexShrink: 0,
+    marginTop: 2,
+  },
+  msgBubble: { maxWidth: "80%", padding: "10px 14px", borderRadius: 12, fontSize: 13, lineHeight: 1.65 },
+  msgBubbleBot: {
+    background: "#111827",
+    border: "1px solid #1e2d45",
+    color: "#e2e8f0",
+    borderTopLeftRadius: 4,
+  },
+  msgBubbleUser: {
+    background: "#1e3a5f",
+    color: "#e2e8f0",
+    borderTopRightRadius: 4,
+  },
+  typingDots: { fontSize: 22, letterSpacing: 3, color: "#64748b", lineHeight: 1 },
+
+  assistantInputRow: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: 10,
+    padding: "12px 16px",
+    borderTop: "1px solid #1e2d45",
+    background: "#0d1424",
+    flexShrink: 0,
+  },
+  assistantTextarea: {
+    flex: 1,
+    padding: "10px 14px",
+    background: "#111827",
+    border: "1px solid #1e2d45",
+    borderRadius: 10,
+    color: "#e2e8f0",
+    fontSize: 13,
+    resize: "none",
+    outline: "none",
+    fontFamily: "inherit",
+    lineHeight: 1.5,
+  },
+  assistantSendBtn: {
+    padding: "10px 16px",
+    background: "#1e3a5f",
+    border: "none",
+    borderRadius: 10,
+    color: "#93c5fd",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: 16,
+    flexShrink: 0,
+  },
+  assistantSendBtnDisabled: { opacity: 0.4, cursor: "not-allowed" },
+
+  micBtn: {
+    padding: "10px",
+    background: "#1e3a5f",
+    border: "none",
+    borderRadius: 10,
+    color: "#93c5fd",
+    cursor: "pointer",
+    fontSize: 16,
+    flexShrink: 0,
+    transition: "all 0.2s",
+  },
+  micBtnListening: {
+    background: "#dc2626",
+    color: "#fff",
+    animation: "mic-pulse 1.5s infinite",
+  },
+  voiceStatus: {
+    fontSize: 12,
+    color: "#64748b",
+    marginLeft: 8,
+    animation: "fade-in 0.3s",
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+}
+
 export default function LawyerDashboard() {
   const [view, setView] = useState("requests")
   const [requests, setRequests] = useState([])
@@ -116,6 +530,12 @@ export default function LawyerDashboard() {
   const [slmLoading, setSlmLoading] = useState(false)
   const [slmActiveCaseId, setSlmActiveCaseId] = useState(null)
 
+  // ── Voice input state ──────────────────────────────────────────────────────
+  const [isListening, setIsListening] = useState(false)
+  const [voiceSupported, setVoiceSupported] = useState(false)
+  const recognitionRef = useRef(null)
+  // ──────────────────────────────────────────────────────────────────────────
+
   const bottomRef = useRef(null)
   const slmBottomRef = useRef(null)
 
@@ -137,6 +557,40 @@ export default function LawyerDashboard() {
   useEffect(() => {
     slmBottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [slmChat])
+
+  // ── Voice setup ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition
+    if (SpeechRecognition) {
+      setVoiceSupported(true)
+      const recognition = new SpeechRecognition()
+      recognition.continuous = false
+      recognition.interimResults = false  // Only fire once with final result
+      recognition.lang = "en-IN" // Indian English — change as needed
+
+      recognition.onresult = (event) => {
+        // Only use the single final transcript result
+        const transcript = event.results[0][0].transcript
+        setSlmInput((prev) => {
+          const base = prev.endsWith(" ") || prev === "" ? prev : prev + " "
+          return base + transcript
+        })
+      }
+
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error)
+        setIsListening(false)
+      }
+
+      recognition.onend = () => {
+        setIsListening(false)
+      }
+
+      recognitionRef.current = recognition
+    }
+  }, [])
+  // ──────────────────────────────────────────────────────────────────────────
 
   async function fetchCases() {
     setLoading(true)
@@ -234,6 +688,12 @@ export default function LawyerDashboard() {
     setSlmChat((prev) => [...prev, { role: "user", text }])
     setSlmLoading(true)
 
+    // Stop voice if still active when the message is sent
+    if (isListening) {
+      recognitionRef.current?.stop()
+      setIsListening(false)
+    }
+
     try {
       const body = {
         message: text,
@@ -277,6 +737,26 @@ export default function LawyerDashboard() {
   const clearSlmCaseContext = () => {
     setSlmActiveCaseId(null)
   }
+
+  // ── Voice toggle ──────────────────────────────────────────────────────────
+  const toggleVoice = () => {
+    if (!recognitionRef.current) return
+    if (isListening) {
+      recognitionRef.current.stop()
+      setIsListening(false)
+    } else {
+      // Clear any trailing interim text before starting fresh segment
+      try {
+        recognitionRef.current.start()
+        setIsListening(true)
+      } catch (err) {
+        // Recognition already started — just stop it
+        recognitionRef.current.stop()
+        setIsListening(false)
+      }
+    }
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   const navItems = [
     { key: "requests", icon: "📨", label: "Requests", badge: requests.length },
@@ -589,6 +1069,36 @@ export default function LawyerDashboard() {
                 onKeyDown={handleSlmKey}
                 rows={2}
               />
+
+              {/* Mic button — only rendered when browser supports Web Speech API */}
+              {voiceSupported && (
+                <button
+                  style={{
+                    ...s.micBtn,
+                    ...(isListening ? s.micBtnListening : {}),
+                  }}
+                  onClick={toggleVoice}
+                  title={isListening ? "Stop recording" : "Speak your message"}
+                  type="button"
+                >
+                  {isListening ? (
+                    /* Animated waveform icon while recording */
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+                      <rect x="2"  y="9"  width="3" height="6" rx="1.5" fill="currentColor" className="wave-bar bar1"/>
+                      <rect x="7"  y="5"  width="3" height="14" rx="1.5" fill="currentColor" className="wave-bar bar2"/>
+                      <rect x="12" y="3"  width="3" height="18" rx="1.5" fill="currentColor" className="wave-bar bar3"/>
+                      <rect x="17" y="5"  width="3" height="14" rx="1.5" fill="currentColor" className="wave-bar bar4"/>
+                    </svg>
+                  ) : (
+                    /* Microphone icon at rest */
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+                      <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4Z" fill="currentColor"/>
+                      <path d="M19 10a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.92V19H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-2.08A7 7 0 0 0 19 10Z" fill="currentColor"/>
+                    </svg>
+                  )}
+                </button>
+              )}
+
               <button
                 style={{
                   ...s.assistantSendBtn,
@@ -600,6 +1110,13 @@ export default function LawyerDashboard() {
                 ➤
               </button>
             </div>
+
+            {/* Listening status label */}
+            {isListening && (
+              <div style={s.voiceStatus}>
+                🎙️ Listening… speak now
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -625,12 +1142,22 @@ export default function LawyerDashboard() {
         </div>
       )}
 
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes mic-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(232,75,75,0.4); }
+          50%       { box-shadow: 0 0 0 8px rgba(232,75,75,0); }
+        }
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(-4px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}} />
       {/* Video call modal removed - now integrated into case detail modal */}
     </div>
   )
 }
 
-const s = {
+/* const s_duplicate = {
   shell: {
     display: "flex",
     height: "100vh",
@@ -642,6 +1169,407 @@ const s = {
 
   sidebar: {
     width: 240,
+    minWidth: 240,
+    background: "#0d1424",
+    borderRight: "1px solid #1e2d45",
+    display: "flex",
+    flexDirection: "column",
+    padding: "24px 0",
+    overflowY: "auto",
+  },
+  brand: {
+    fontSize: 22,
+    fontWeight: 800,
+    letterSpacing: 1,
+    padding: "0 20px 20px",
+    color: "#e2e8f0",
+  },
+  gold: { color: "#d4af37" },
+  userBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "0 16px 24px",
+    borderBottom: "1px solid #1e2d45",
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: "50%",
+    background: "#1e3a5f",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 700,
+    fontSize: 15,
+    color: "#93c5fd",
+    flexShrink: 0,
+  },
+  userName: { fontSize: 13, fontWeight: 600, color: "#e2e8f0" },
+  userRole: { fontSize: 11, color: "#d4af37", marginTop: 1 },
+  nav: { padding: "16px 12px 0", display: "flex", flexDirection: "column", gap: 4 },
+  navBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "10px 12px",
+    borderRadius: 8,
+    background: "transparent",
+    border: "none",
+    color: "#94a3b8",
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 500,
+    textAlign: "left",
+    width: "100%",
+    transition: "all 0.15s",
+  },
+  navBtnActive: { background: "#1e2d45", color: "#e2e8f0" },
+  badge: {
+    background: "#1e2d45",
+    color: "#94a3b8",
+    borderRadius: 10,
+    fontSize: 11,
+    padding: "2px 7px",
+    fontWeight: 600,
+  },
+  badgeGold: { background: "#78350f", color: "#fbbf24" },
+  sidebarCases: { padding: "16px 12px 0", borderTop: "1px solid #1e2d45", marginTop: 16 },
+  sidebarCasesTitle: {
+    fontSize: 11,
+    color: "#64748b",
+    fontWeight: 600,
+    padding: "0 4px 8px",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  sidebarCaseBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "8px 10px",
+    borderRadius: 6,
+    background: "transparent",
+    border: "none",
+    color: "#94a3b8",
+    cursor: "pointer",
+    fontSize: 12,
+    textAlign: "left",
+    width: "100%",
+    transition: "all 0.15s",
+  },
+  sidebarCaseBtnActive: { background: "#1e2d45", color: "#e2e8f0" },
+  sidebarCaseName: { flex: 1, fontSize: 12 },
+  logoutBtn: {
+    margin: "auto 12px 20px",
+    padding: "10px",
+    borderRadius: 8,
+    background: "transparent",
+    border: "1px solid #1e2d45",
+    color: "#94a3b8",
+    cursor: "pointer",
+    fontSize: 12,
+    width: "calc(100% - 24px)",
+    transition: "all 0.15s",
+  },
+  logoutBtnHover: { background: "#1e2d45", color: "#e2e8f0" },
+
+  main: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+
+  panel: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    background: "#0d1424",
+    borderRadius: "12px",
+    margin: "20px",
+    overflow: "hidden",
+  },
+  panelHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "20px",
+    borderBottom: "1px solid #1e2d45",
+    flexShrink: 0,
+  },
+  panelTitle: { fontSize: 18, fontWeight: 700, color: "#e2e8f0" },
+  refreshBtn: {
+    padding: "8px 12px",
+    borderRadius: 6,
+    background: "#1e3a5f",
+    border: "none",
+    color: "#93c5fd",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 600,
+  },
+
+  empty: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    padding: "40px 20px",
+  },
+  emptyIcon: { fontSize: 48, marginBottom: 16, opacity: 0.5 },
+  emptyText: { fontSize: 14, color: "#64748b", marginBottom: 8 },
+  emptySubtext: { fontSize: 12, color: "#475569" },
+
+  stack: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 16,
+  },
+
+  caseCard: {
+    background: "#111827",
+    border: "1px solid #1e2d45",
+    borderRadius: 12,
+    padding: 0,
+    overflow: "hidden",
+    transition: "border-color 0.2s",
+  },
+  caseCardHover: { borderColor: "#374151" },
+  caseCardLeft: { padding: "16px" },
+  caseCardTop: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 },
+  caseTypeTag: {
+    background: "#1e3a5f",
+    color: "#93c5fd",
+    padding: "4px 8px",
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: 600,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    display: "inline-block",
+  },
+  caseTitle: { fontSize: 16, fontWeight: 600, color: "#e2e8f0", marginBottom: 4 },
+  caseDesc: { fontSize: 13, color: "#94a3b8", lineHeight: 1.5 },
+  clientName: { fontSize: 12, color: "#64748b", marginTop: 8 },
+  caseActions: {
+    display: "flex",
+    gap: 8,
+    padding: "12px 16px",
+    background: "#0a0f1e",
+    borderTop: "1px solid #1e2d45",
+  },
+  acceptBtn: {
+    flex: 1,
+    padding: "8px 12px",
+    borderRadius: 6,
+    background: "#10b981",
+    border: "none",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 600,
+  },
+  rejectBtn: {
+    flex: 1,
+    padding: "8px 12px",
+    borderRadius: 6,
+    background: "transparent",
+    border: "1px solid #ef4444",
+    color: "#ef4444",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 600,
+  },
+  chatBtn: {
+    flex: 1,
+    padding: "8px 12px",
+    borderRadius: 6,
+    background: "#3b82f6",
+    border: "none",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 600,
+  },
+  resolveBtn: {
+    flex: 1,
+    padding: "8px 12px",
+    borderRadius: 6,
+    background: "#8b5cf6",
+    border: "none",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 600,
+  },
+
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+  },
+
+  assistantShell: { display: "flex", flexDirection: "column", height: "100vh", background: "#0d1424" },
+  assistantHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "14px 20px",
+    borderBottom: "1px solid #1e2d45",
+    flexShrink: 0,
+  },
+  assistantHeaderLeft: { display: "flex", alignItems: "center", gap: 10 },
+  assistantTitle: { fontSize: 15, fontWeight: 700, color: "#e2e8f0" },
+  assistantNote: { fontSize: 12, color: "#64748b" },
+  chatbotDot: { width: 8, height: 8, borderRadius: "50%", background: "#10b981" },
+  slmCaseBar: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+    padding: "14px 20px",
+    borderBottom: "1px solid #1e2d45",
+    background: "#0b1221",
+  },
+  slmCaseLabel: { fontSize: 12, color: "#94a3b8", fontWeight: 600 },
+  slmCasePill: {
+    border: "1px solid #1e2d45",
+    background: "#12203a",
+    color: "#e2e8f0",
+    padding: "8px 12px",
+    borderRadius: 999,
+    cursor: "pointer",
+    fontSize: 12,
+  },
+  slmCasePillActive: {
+    background: "#4338ca",
+    borderColor: "#4338ca",
+    color: "#fff",
+  },
+  slmClearBtn: {
+    marginLeft: "auto",
+    border: "1px solid #1e2d45",
+    background: "transparent",
+    color: "#f8fafc",
+    padding: "8px 12px",
+    borderRadius: 999,
+    cursor: "pointer",
+    fontSize: 12,
+  },
+
+  assistantMessages: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "16px 20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 14,
+  },
+  chatMsg: { display: "flex", alignItems: "flex-start", gap: 10 },
+  chatMsgBot: { flexDirection: "row" },
+  chatMsgUser: { flexDirection: "row-reverse" },
+  botAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: "50%",
+    background: "#1e3a5f",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 13,
+    flexShrink: 0,
+    marginTop: 2,
+  },
+  msgBubble: { maxWidth: "80%", padding: "10px 14px", borderRadius: 12, fontSize: 13, lineHeight: 1.65 },
+  msgBubbleBot: {
+    background: "#111827",
+    border: "1px solid #1e2d45",
+    color: "#e2e8f0",
+    borderTopLeftRadius: 4,
+  },
+  msgBubbleUser: {
+    background: "#1e3a5f",
+    color: "#e2e8f0",
+    borderTopRightRadius: 4,
+  },
+  typingDots: { fontSize: 22, letterSpacing: 3, color: "#64748b", lineHeight: 1 },
+
+  assistantInputRow: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: 10,
+    padding: "12px 16px",
+    borderTop: "1px solid #1e2d45",
+    background: "#0d1424",
+    flexShrink: 0,
+  },
+  assistantTextarea: {
+    flex: 1,
+    padding: "10px 14px",
+    background: "#111827",
+    border: "1px solid #1e2d45",
+    borderRadius: 10,
+    color: "#e2e8f0",
+    fontSize: 13,
+    resize: "none",
+    outline: "none",
+    fontFamily: "inherit",
+    lineHeight: 1.5,
+  },
+  assistantSendBtn: {
+    padding: "10px 16px",
+    background: "#1e3a5f",
+    border: "none",
+    borderRadius: 10,
+    color: "#93c5fd",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: 16,
+    flexShrink: 0,
+  },
+  assistantSendBtnDisabled: { opacity: 0.4, cursor: "not-allowed" },
+
+  micBtn: {
+    padding: "10px",
+    background: "#1e3a5f",
+    border: "none",
+    borderRadius: 10,
+    color: "#93c5fd",
+    cursor: "pointer",
+    fontSize: 16,
+    flexShrink: 0,
+    transition: "all 0.2s",
+  },
+  micBtnListening: {
+    background: "#dc2626",
+    color: "#fff",
+    animation: "mic-pulse 1.5s infinite",
+  },
+  voiceStatus: {
+    fontSize: 12,
+    color: "#64748b",
+    marginLeft: 8,
+    animation: "fade-in 0.3s",
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+}
     minWidth: 240,
     background: "#0d1424",
     borderRight: "1px solid #1e2d45",
@@ -1077,4 +2005,63 @@ const s = {
     flexShrink: 0,
   },
   assistantSendBtnDisabled: { opacity: 0.4, cursor: "not-allowed" },
+
+  // ── Voice styles ──────────────────────────────────────────────────────────
+  micBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 38,
+    height: 38,
+    borderRadius: "50%",
+    border: "none",
+    background: "transparent",
+    color: "#64748b",
+    cursor: "pointer",
+    flexShrink: 0,
+    transition: "background 0.2s, color 0.2s, transform 0.15s",
+  },
+  micBtnListening: {
+    background: "rgba(232, 75, 75, 0.15)",
+    color: "#e84b4b",
+    animation: "mic-pulse 1.2s ease-in-out infinite",
+  },
+  voiceStatus: {
+    fontSize: 11,
+    color: "#e84b4b",
+    textAlign: "center",
+    padding: "4px 0 6px",
+    letterSpacing: "0.03em",
+    animation: "fade-in 0.3s ease",
+  },
+  // ──────────────────────────────────────────────────────────────────────────
 }
+
+// ── Voice CSS animations ───────────────────────────────────────────────────
+const voiceStyles = /*
+  @keyframes mic-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232,75,75,0.4); }
+    50%       { box-shadow: 0 0 0 8px rgba(232,75,75,0); }
+  }
+
+  .wave-bar {
+    transform-origin: bottom center;
+    animation: wave-bounce 0.7s ease-in-out infinite;
+  }
+  .bar1 { animation-delay: 0s;    }
+  .bar2 { animation-delay: 0.1s;  }
+  .bar3 { animation-delay: 0.2s;  }
+  .bar4 { animation-delay: 0.3s;  }
+  @keyframes wave-bounce {
+    0%, 100% { transform: scaleY(0.5); opacity: 0.6; }
+    50%       { transform: scaleY(1.0); opacity: 1;   }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+*/
+// ──────────────────────────────────────────────────────────────────────────
+
+// export default function LawyerDashboard() {
