@@ -131,6 +131,9 @@ export default function Chatbot({ cases = [] }) {
   const [editingChatId, setEditingChatId] = useState(null)
   const [editTitle, setEditTitle] = useState("")
   const bottomRef = useRef(null)
+  const [isListening, setIsListening] = useState(false)
+  const [voiceSupported, setVoiceSupported] = useState(false)
+  const recognitionRef = useRef(null)
 
   useEffect(() => {
     localStorage.setItem("legal_chat_history", JSON.stringify(chats))
@@ -148,12 +151,67 @@ export default function Chatbot({ cases = [] }) {
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [])
+  useEffect(() => {
+    const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition
+
+  if (!SpeechRecognition) return
+
+  setVoiceSupported(true)
+
+  const recognition = new SpeechRecognition()
+  recognition.continuous = false
+  recognition.interimResults = false
+  recognition.lang = "en-IN"
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript
+    setMessage((prev) => {
+      const base = prev.endsWith(" ") || prev === "" ? prev : prev + " "
+      return base + transcript
+    })
+  }
+
+  recognition.onerror = () => {
+    setIsListening(false)
+  }
+
+  recognition.onend = () => {
+    setIsListening(false)
+  }
+
+  recognitionRef.current = recognition
+
+  return () => {
+    recognition.stop()
+  }
+}, [])
 
   const currentChat = chats.find((c) => c.id === currentChatId) || chats[0]
   const activeCase = cases.find((c) => c.id === currentChat?.activeCaseId) || null
+  const toggleVoice = () => {
+  if (!recognitionRef.current) return
+
+  if (isListening) {
+    recognitionRef.current.stop()
+    setIsListening(false)
+  } else {
+    try {
+      recognitionRef.current.start()
+      setIsListening(true)
+    } catch {
+      recognitionRef.current.stop()
+      setIsListening(false)
+    }
+  }
+}
 
   const sendMessage = async () => {
     if (!message.trim() || loading || !currentChat) return
+    if (isListening) {
+  recognitionRef.current?.stop()
+  setIsListening(false)
+}
 
     const userMsg = message.trim()
     setMessage("")
@@ -537,21 +595,51 @@ export default function Chatbot({ cases = [] }) {
         )}
 
         <div className="chatbot-input">
-          <textarea
-            placeholder="Ask about your case, legal rights, procedures..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKey}
-            rows={2}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={!message.trim() || loading}
-            className="send-btn"
-          >
-            ➤
-          </button>
-        </div>
+  <textarea
+    placeholder="Ask about your case, legal rights, procedures..."
+    value={message}
+    onChange={(e) => setMessage(e.target.value)}
+    onKeyDown={handleKey}
+    rows={2}
+  />
+
+  {voiceSupported && (
+    <button
+      className={`mic-btn${isListening ? " mic-listening" : ""}`}
+      onClick={toggleVoice}
+      title={isListening ? "Stop recording" : "Speak your message"}
+      type="button"
+    >
+      {isListening ? (
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+          <rect x="2" y="9" width="3" height="6" rx="1.5" fill="currentColor" className="wave-bar bar1" />
+          <rect x="7" y="5" width="3" height="14" rx="1.5" fill="currentColor" className="wave-bar bar2" />
+          <rect x="12" y="3" width="3" height="18" rx="1.5" fill="currentColor" className="wave-bar bar3" />
+          <rect x="17" y="5" width="3" height="14" rx="1.5" fill="currentColor" className="wave-bar bar4" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+          <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4Z" fill="currentColor" />
+          <path d="M19 10a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.92V19H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-2.08A7 7 0 0 0 19 10Z" fill="currentColor" />
+        </svg>
+      )}
+    </button>
+  )}
+
+  <button
+    onClick={sendMessage}
+    disabled={!message.trim() || loading}
+    className="send-btn"
+  >
+    ➤
+  </button>
+</div>
+
+{isListening && (
+  <div className="voice-status">
+    🎙️ Listening… speak now
+  </div>
+)}
       </div>
     </div>
   )

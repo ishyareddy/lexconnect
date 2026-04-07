@@ -692,7 +692,61 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 }
 .chatbot-input textarea:focus { border-color: var(--gold); }
 .chatbot-input textarea::placeholder { color: rgba(120,140,160,0.7); }
+.mic-btn {
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+}
 
+.mic-btn:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(201,168,76,0.35);
+  color: var(--gold);
+}
+
+.mic-btn.mic-listening {
+  background: rgba(220,80,80,0.16);
+  border-color: rgba(220,80,80,0.45);
+  color: #ff8080;
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+
+.voice-status {
+  padding: 0 0.9rem 0.7rem;
+  font-size: 0.78rem;
+  color: #ff8080;
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+
+.wave-bar {
+  transform-origin: bottom center;
+  animation: wave-bounce 0.7s ease-in-out infinite;
+}
+
+.bar1 { animation-delay: 0s; }
+.bar2 { animation-delay: 0.1s; }
+.bar3 { animation-delay: 0.2s; }
+.bar4 { animation-delay: 0.3s; }
+
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220,80,80,0.35); }
+  50% { box-shadow: 0 0 0 8px rgba(220,80,80,0); }
+}
+
+@keyframes wave-bounce {
+  0%, 100% { transform: scaleY(0.5); opacity: 0.6; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
 .chatbot-case-pills {
   display: flex;
   align-items: center;
