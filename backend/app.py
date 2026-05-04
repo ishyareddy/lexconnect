@@ -1,5 +1,6 @@
 import suppress_warnings
-
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import FastAPI, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
